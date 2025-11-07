@@ -169,6 +169,14 @@ class PrimaryButton extends StatelessWidget {
       borderRadius: borderRadius,
       backgroundColor: Theme.of(context).primaryColor,
       textColor: Colors.white,
+      gradient: const LinearGradient(
+      begin: Alignment.topLeft,
+      end: Alignment.bottomRight,
+      colors: [
+        Color(0xFF667eea),
+        Color(0xFF764ba2),
+      ],
+    ),
     );
   }
 }

@@ -34,10 +34,10 @@ class LoginScreen extends StatelessWidget {
 controller: _passwordController,
               isPassword: true,
             ),
-            12.ph,
+            22.ph,
             PrimaryButton(
               text: 'تسحيل الدخول',
-              borderRadius: 60,
+              borderRadius: 10,
               onPressed: (){
                 context.go('/dashboard');
               },

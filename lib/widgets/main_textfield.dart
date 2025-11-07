@@ -45,6 +45,7 @@ class MainTextField extends StatefulWidget {
   final Color? borderColor;
   final Color? focusedBorderColor;
   final Color? errorBorderColor;
+  final Color? filledColor;
   final double? borderWidth;
 
   const MainTextField({
@@ -91,6 +92,7 @@ class MainTextField extends StatefulWidget {
     this.focusedBorderColor,
     this.errorBorderColor,
     this.borderWidth,
+    this.filledColor,
   });
 
   @override
@@ -122,6 +124,8 @@ class _MainTextFieldState extends State<MainTextField> {
 
   @override
   Widget build(BuildContext context) {
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
@@ -165,6 +169,8 @@ class _MainTextFieldState extends State<MainTextField> {
             FocusScope.of(context).unfocus();
           },
           decoration: InputDecoration(
+            filled: true,
+            fillColor: widget.filledColor ?? (isDark ? Colors.grey.shade900 : Colors.white),
             label: widget.label != null
                 ? Text(
               widget.label!,
@@ -216,109 +222,6 @@ class _MainTextFieldState extends State<MainTextField> {
           ),
         ),
       ],
-    );
-  }
-}
-
-class MainMultiLinesTextField extends StatefulWidget {
-  const MainMultiLinesTextField({
-    super.key,
-    this.hint = '',
-    this.fontWeight,
-    this.colorText,
-    this.prefixIcon,
-    this.keyboardType = TextInputType.text,
-    this.maxLines = 1,
-    this.init,
-    this.maxInputLength,
-    this.border,
-    this.isDense = true,
-    this.contentPadding,
-    this.filledColor = const Color(0xFFFFFFFF),
-    this.suffix,
-    this.onSubmit,
-    this.enable = true,
-    this.style,
-    this.hideKeyboard = false,
-    this.borderColor,
-    this.suffixIcon,
-    this.unfocusWhenTapOutside = false,
-    this.onTap,
-    this.onChanged,
-    this.controller,
-    this.obscureText = false,
-    this.validator,
-  });
-
-  final String hint;
-  final FontWeight? fontWeight;
-  final Color? colorText;
-  final Widget? prefixIcon;
-  final Widget? suffix;
-  final Widget? suffixIcon;
-  final TextInputType keyboardType;
-  final int? maxLines;
-  final String? init;
-  final bool isDense;
-  final EdgeInsets? contentPadding;
-  final TextStyle? style;
-  final int? maxInputLength;
-  final bool hideKeyboard;
-  final OutlineInputBorder? border;
-  final Color? filledColor;
-  final Color? borderColor;
-  final bool enable;
-  final void Function(String value)? onSubmit;
-  final bool unfocusWhenTapOutside;
-  final void Function()? onTap;
-  final void Function(String value)? onChanged;
-  final TextEditingController? controller;
-  final bool obscureText;
-  final String? Function(String? value)? validator;
-
-  @override
-  State<MainMultiLinesTextField> createState() =>
-      _MainMultiLinesTextFieldState();
-}
-
-class _MainMultiLinesTextFieldState extends State<MainMultiLinesTextField> {
-  @override
-  Widget build(BuildContext context) {
-    return TextFormField(
-      controller: widget.controller,
-      cursorHeight: 22.0,
-      enabled: widget.enable,
-      maxLines: widget.maxLines,
-      maxLength: widget.maxInputLength,
-      onFieldSubmitted: widget.onSubmit,
-      keyboardType: widget.keyboardType,
-      obscureText: widget.obscureText,
-      validator: widget.validator,
-      style: widget.style ??
-          const TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w500,
-          ),
-      onChanged: widget.onChanged,
-      onTap: widget.onTap,
-      onTapOutside: (event) {
-        if (widget.unfocusWhenTapOutside) {
-          FocusScope.of(context).requestFocus(FocusNode());
-        }
-      },
-      decoration: InputDecoration(
-        isDense: widget.isDense,
-        prefixIcon: widget.prefixIcon,
-        suffix: widget.suffix,
-        contentPadding: widget.contentPadding,
-        hintText: widget.hint.isNotEmpty ? widget.hint : null,
-        hintStyle: const TextStyle(
-          fontSize: 13,
-          color: Colors.grey,
-          fontWeight: FontWeight.w400,
-        ),
-        suffixIcon: widget.suffixIcon,
-      ),
     );
   }
 }
