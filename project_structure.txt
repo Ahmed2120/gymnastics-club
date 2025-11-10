@@ -1,0 +1,115 @@
+lib/
+│
+├── core/
+│   ├── constants/
+│   │   ├── app_colors.dart
+│   │   ├── app_icons.dart
+│   │   ├── app_text_styles.dart
+│   │   └── api_constants.dart
+│   │
+│   ├── utils/
+│   │   ├── validators.dart
+│   │   ├── date_helper.dart
+│   │   ├── snackbar_helper.dart
+│   │   └── extensions/
+│   │       └── context_extensions.dart
+│   │
+│   ├── routing/
+│   │   ├── app_router.dart
+│   │   └── routes.dart
+│   │
+│   ├── theme/
+│   │   ├── app_theme.dart
+│   │   └── dark_theme.dart
+│   │
+│   ├── widgets/
+│   │   ├── custom_button.dart
+│   │   ├── custom_text_field.dart
+│   │   └── empty_state_widget.dart
+│   │
+│   └── services/
+│       ├── supabase_client.dart
+│       ├── notification_service.dart
+│       ├── local_storage_service.dart
+│       └── connectivity_service.dart
+│
+├── data/
+│   ├── models/
+│   │   ├── user_model.dart
+│   │   ├── child_model.dart
+│   │   ├── schedule_model.dart
+│   │   ├── achievement_model.dart
+│   │   ├── news_model.dart
+│   │   └── request_model.dart
+│   │
+│   ├── repositories/
+│   │   ├── auth_repository.dart
+│   │   ├── child_repository.dart
+│   │   ├── schedule_repository.dart
+│   │   ├── news_repository.dart
+│   │   └── request_repository.dart
+│
+├── features/
+│   ├── auth/
+│   │   ├── view/
+│   │   │   ├── login_screen.dart
+│   │   │   └── splash_screen.dart
+│   │   ├── viewmodel/
+│   │   │   └── auth_viewmodel.dart
+│   │   └── provider/
+│   │       └── auth_provider.dart
+│   │
+│   ├── home/
+│   │   ├── view/
+│   │   │   ├── home_screen.dart
+│   │   │   └── dashboard_section.dart
+│   │   ├── viewmodel/
+│   │   │   └── home_viewmodel.dart
+│   │   └── provider/
+│   │       └── home_provider.dart
+│   │
+│   ├── schedule/
+│   │   ├── view/
+│   │   │   └── schedule_screen.dart
+│   │   ├── viewmodel/
+│   │   │   └── schedule_viewmodel.dart
+│   │   └── provider/
+│   │       └── schedule_provider.dart
+│   │
+│   ├── attendance/
+│   │   ├── view/
+│   │   │   └── attendance_screen.dart
+│   │   ├── viewmodel/
+│   │   │   └── attendance_viewmodel.dart
+│   │   └── provider/
+│   │       └── attendance_provider.dart
+│   │
+│   ├── achievements/
+│   │   ├── view/
+│   │   │   └── achievements_screen.dart
+│   │   ├── viewmodel/
+│   │   │   └── achievements_viewmodel.dart
+│   │   └── provider/
+│   │       └── achievements_provider.dart
+│   │
+│   ├── news/
+│   │   ├── view/
+│   │   │   └── news_screen.dart
+│   │   ├── viewmodel/
+│   │   │   └── news_viewmodel.dart
+│   │   └── provider/
+│   │       └── news_provider.dart
+│   │
+│   └── requests/
+│       ├── view/
+│       │   └── request_screen.dart
+│       ├── viewmodel/
+│       │   └── request_viewmodel.dart
+│       └── provider/
+│           └── request_provider.dart
+│
+├── localization/
+│   ├── app_localizations.dart
+│   └── ar.json
+│
+└── main.dart

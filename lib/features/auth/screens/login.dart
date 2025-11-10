@@ -4,6 +4,7 @@ import 'package:gymnastics_club/core/utils/extensions/size_extensions.dart';
 import 'package:gymnastics_club/widgets/main_textfield.dart';
 
 import '../../../core/costants/app_icons.dart';
+import '../../../core/routing/routes.dart';
 import '../../../widgets/custom_button.dart';
 import '../../../widgets/main_text.dart';
 
@@ -39,7 +40,7 @@ controller: _passwordController,
               text: 'تسحيل الدخول',
               borderRadius: 10,
               onPressed: (){
-                context.go('/dashboard');
+                context.go(Routes.dashboard);
               },
             ),
             32.ph,

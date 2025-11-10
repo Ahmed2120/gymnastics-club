@@ -23,7 +23,17 @@ dependencies:
 dev_dependencies:
   flutter_test:
     sdk: flutter
+  flutter_launcher_icons: ^0.14.4
+
 flutter_lints: ^5.0.0
+
+flutter_launcher_icons:
+  android: true
+  ios: true
+  remove_alpha_ios: true
+  adaptive_icon_background: "#27A6FF"  # same as your app's main color
+  adaptive_icon_foreground: "assets/images/app-icon.jpg"
+  image_path: "assets/images/app-icon.jpg"
 
 flutter:
 
@@ -33,6 +43,7 @@ flutter:
   assets:
     - assets/images/
     - assets/languages/
+    - shorebird.yaml
 
 # list giving the asset and other descriptors for the font. For
   # example:

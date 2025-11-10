@@ -4,6 +4,8 @@ import 'package:gymnastics_club/core/utils/extensions/size_extensions.dart';
 import 'package:gymnastics_club/widgets/main_text.dart';
 import 'dart:ui' as ui;
 
+import '../../../core/routing/routes.dart';
+
 class ProfilePage extends StatelessWidget {
   const ProfilePage({super.key});
 
@@ -68,7 +70,11 @@ class ProfilePage extends StatelessWidget {
               children: [
                 _profileCard(context, title: 'طلب إذن',
                     icon: Icon(Icons.perm_identity),
-                    onTap: ()=>  context.push('/permissions')),
+                    onTap: ()=>  context.push(Routes.permissions)),
+                18.ph,
+                _profileCard(context, title: 'الحضور والغياب',
+                    icon: Icon(Icons.perm_identity),
+                    onTap: ()=>  context.push(Routes.attendanceAndAbsence)),
                 18.ph,
                 _profileCard(context,
                     title: 'تسجيل الخروج',
