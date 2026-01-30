@@ -9,6 +9,7 @@ import '../../features/permission/screens/permissions_screen.dart';
 import 'routes.dart';
 
 final GoRouter router = GoRouter(
+  navigatorKey: navigatorKey,
   initialLocation: Routes.login,
   routes: [
     GoRoute(
@@ -33,3 +34,4 @@ final GoRouter router = GoRouter(
     ),
   ],
 );
+final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();

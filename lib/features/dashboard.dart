@@ -3,13 +3,12 @@
 // ============================================
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_riverpod/legacy.dart';
 import 'package:gymnastics_club/features/achievement/screens/achievement_page.dart';
 import 'package:gymnastics_club/features/profile/screens/profile_page.dart';
 import 'package:gymnastics_club/features/schedule/screens/schedule_page.dart';
 
-
 import 'home/screens/home.dart';
+import 'profile/profile_controller/child_riverpod.dart';
 
 // Provider للتحكم في الصفحة الحالية
 
@@ -21,32 +20,34 @@ class Dashboard extends StatefulWidget {
 }
 
 class _DashboardState extends State<Dashboard> {
-
   int _currentIndex = 0;
 
   @override
-  Widget build(BuildContext context) {
+  void initState() {
+    super.initState();
+    Future.microtask(() {
+      final container = ProviderScope.containerOf(context, listen: false);
+      container.read(childRiverpod.notifier).getChildren();
+    });
+  }
 
+  @override
+  Widget build(BuildContext context) {
     // قائمة الشاشات
-    final screens = [
-      const homePage(),
+    final List<Widget> screens = [
+      HomePage(),
       const SchedulePage(),
       const AchievementPage(),
       const ProfilePage(),
     ];
 
     return Scaffold(
-      body: IndexedStack(
-        index: _currentIndex,
-        children: screens,
-      ),
+      body: IndexedStack(index: _currentIndex, children: screens),
       bottomNavigationBar: _buildBottomNavigationBar(context),
     );
   }
 
-  Widget _buildBottomNavigationBar(
-      BuildContext context,
-      ) {
+  Widget _buildBottomNavigationBar(BuildContext context) {
     return BottomNavigationBar(
       currentIndex: _currentIndex,
       onTap: (index) {

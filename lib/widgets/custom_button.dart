@@ -218,7 +218,7 @@ class SecondaryButton extends StatelessWidget {
   }
 }
 
-class OutlinedButton extends StatelessWidget {
+class CustomOutlinedButton extends StatelessWidget {
   final String text;
   final VoidCallback? onPressed;
   final bool isLoading;
@@ -227,8 +227,9 @@ class OutlinedButton extends StatelessWidget {
   final double? width;
   final Color? borderColor;
   final Color? textColor;
+  final Color? backgroundColor;
 
-  const OutlinedButton({
+  const CustomOutlinedButton({
     super.key,
     required this.text,
     this.onPressed,
@@ -238,6 +239,7 @@ class OutlinedButton extends StatelessWidget {
     this.width,
     this.borderColor,
     this.textColor,
+    this.backgroundColor,
   });
 
   @override
@@ -250,7 +252,7 @@ class OutlinedButton extends StatelessWidget {
       prefixIcon: prefixIcon,
       suffixIcon: suffixIcon,
       width: width,
-      backgroundColor: Colors.transparent,
+      backgroundColor: backgroundColor?? Colors.transparent,
       textColor: textColor ?? Colors.black87,
       borderSide: BorderSide(
         color: color,

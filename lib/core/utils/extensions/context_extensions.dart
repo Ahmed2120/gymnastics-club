@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 
 extension ContextExtensions on BuildContext {
@@ -6,6 +7,9 @@ extension ContextExtensions on BuildContext {
 
   /// Shortcut to access media query
   MediaQueryData get mediaQuery => MediaQuery.of(this);
+
+  /// Get language code
+  String get languageCode => locale.languageCode;
 
   /// Get screen width easily
   double get width => mediaQuery.size.width;
