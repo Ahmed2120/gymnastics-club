@@ -62,95 +62,108 @@ class _AchievementPageState extends ConsumerState<AchievementPage> {
     final achievements = achievementState.achievementList;
     return Scaffold(
       appBar: AppBar(title: MainText('الإنجازات'), centerTitle: true),
-      body: achievementState.isLoading
-          ? MainShimmer.achievementCard()
-          : achievements.isEmpty
-          ? const Center(child: MainText('لا يوجد إنجازات لهذا البطل حالياً'))
-          : ListView.separated(
-              controller: _scrollController,
-              padding: const EdgeInsets.all(16),
-              itemCount:
-                  achievements.length +
-                  (achievementState.isLoadingMore ? 1 : 0),
-              separatorBuilder: (context, index) => 12.ph,
-              itemBuilder: (context, index) {
-                if (index == achievements.length) {
-                  return MainShimmer.single(height: 100);
-                }
-                final item = achievements[index];
-                return FadeInUp(
-                  duration: const Duration(seconds: 1),
-                  delay: Duration(milliseconds: 100 * index),
-                  child: Container(
-                    padding: const EdgeInsets.all(20),
-                    width: double.infinity,
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(10),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.05),
-                          offset: const Offset(0, 4),
-                          blurRadius: 8,
-                        ),
-                      ],
-                    ),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            gradient: const LinearGradient(
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                              colors: [
-                                Color(0xFFFFD700), // gold
-                                Color(0xFFFFED4E), // light gold
+      body: RefreshIndicator(
+        onRefresh: () async {
+          _fetchData();
+        },
+        child: achievementState.isLoading
+            ? MainShimmer.achievementCard()
+            : achievements.isEmpty
+            ? ListView(
+                children: const [
+                  SizedBox(height: 200),
+                  Center(child: MainText('لا يوجد إنجازات لهذا البطل حالياً')),
+                ],
+              )
+            : ListView.separated(
+                controller: _scrollController,
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.all(16),
+                itemCount:
+                    achievements.length +
+                    (achievementState.isLoadingMore ? 1 : 0),
+                separatorBuilder: (context, index) => 12.ph,
+                itemBuilder: (context, index) {
+                  if (index == achievements.length) {
+                    return MainShimmer.single(height: 100);
+                  }
+                  final item = achievements[index];
+                  return FadeInUp(
+                    duration: const Duration(seconds: 1),
+                    delay: Duration(milliseconds: 100 * index),
+                    child: Container(
+                      padding: const EdgeInsets.all(20),
+                      width: double.infinity,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(10),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.05),
+                            offset: const Offset(0, 4),
+                            blurRadius: 8,
+                          ),
+                        ],
+                      ),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              gradient: const LinearGradient(
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                                colors: [
+                                  Color(0xFFFFD700), // gold
+                                  Color(0xFFFFED4E), // light gold
+                                ],
+                              ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: const Color(
+                                    0xFFFFD700,
+                                  ).withOpacity(0.3),
+                                  blurRadius: 12,
+                                  offset: const Offset(0, 4),
+                                ),
                               ],
                             ),
-                            boxShadow: [
-                              BoxShadow(
-                                color: const Color(0xFFFFD700).withOpacity(0.3),
-                                blurRadius: 12,
-                                offset: const Offset(0, 4),
-                              ),
-                            ],
+                            child: const MainText('🥇', fontSize: 30),
                           ),
-                          child: const MainText('🥇', fontSize: 30),
-                        ),
-                        12.pw,
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              MainText(
-                                item.title.tr(),
-                                fontSize: 20,
-                                fontWeight: FontWeight.w700,
-                                color: const Color(0xFF667eea),
-                              ),
-                              12.ph,
-                              MainText(
-                                DateFormat(
-                                  'd MMMM yyyy',
-                                  'ar',
-                                ).format(item.date),
-                                fontSize: 14,
-                                color: Colors.grey,
-                              ),
-                              12.ph,
-                              MainText(item.venue, fontSize: 18),
-                            ],
+                          12.pw,
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                MainText(
+                                  item.title.tr(),
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.w700,
+                                  color: const Color(0xFF667eea),
+                                ),
+                                12.ph,
+                                MainText(
+                                  DateFormat(
+                                    'd MMMM yyyy',
+                                    'ar',
+                                  ).format(item.date),
+                                  fontSize: 14,
+                                  color: Colors.grey,
+                                ),
+                                12.ph,
+                                MainText(item.venue, fontSize: 18),
+                              ],
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
-                  ),
-                );
-              },
-            ),
+                  );
+                },
+              ),
+      ),
     );
   }
 }

@@ -54,62 +54,73 @@ class _PermissionsScreenState extends ConsumerState<PermissionsScreen> {
           _buildFilterBar(),
 
           Expanded(
-            child: Consumer(
-              builder: (context, ref, _) {
-                final permissionState = ref.watch(permissionRiverpod);
-
-                if (permissionState.isLoading) {
-                  return MainShimmer.cardList();
-                } else if (permissionState.error.isNotEmpty) {
-                  return Center(
-                    child: MainText(permissionState.error.toString()),
-                  );
-                }
-
-                final filteredList = _selectedFilter == null
-                    ? permissionState.permissionList
-                    : permissionState.permissionList
-                          .where((item) => item.status == _selectedFilter)
-                          .toList();
-
-                // Use AnimatedSwitcher for smooth transition between "No Data" and "List"
-                return AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 400),
-                  child: filteredList.isEmpty
-                      ? const Center(
-                          key: ValueKey('empty'),
-                          child: MainText('لا توجد طلبات في هذا القسم'),
-                        )
-                      : ListView.separated(
-                          controller: _scrollController,
-                          key: ValueKey(_selectedFilter),
-                          // Forces re-animation on filter change
-                          padding: const EdgeInsets.all(16),
-                          itemCount:
-                              filteredList.length +
-                              (permissionState.isLoadingMore ? 1 : 0),
-                          separatorBuilder: (context, index) => 12.ph,
-
-                          itemBuilder: (context, index) {
-                            if (index == filteredList.length) {
-                              return MainShimmer.single(height: 120);
-                            }
-                            final item = filteredList[index];
-                            return FadeInUp(
-                              duration: const Duration(milliseconds: 300),
-                              delay: Duration(milliseconds: 50 * index),
-                              child: RequestWidget(
-                                permissionModel: item,
-                                isLoading:
-                                    permissionState.changeStatusLoading &&
-                                    permissionState.permissionStatusId ==
-                                        item.id,
-                              ),
-                            );
-                          },
-                        ),
-                );
+            child: RefreshIndicator(
+              onRefresh: () async {
+                await ref.read(permissionRiverpod.notifier).getPermissionList();
               },
+              child: Consumer(
+                builder: (context, ref, _) {
+                  final permissionState = ref.watch(permissionRiverpod);
+
+                  if (permissionState.isLoading) {
+                    return MainShimmer.cardList();
+                  } else if (permissionState.error.isNotEmpty) {
+                    return Center(
+                      child: MainText(permissionState.error.toString()),
+                    );
+                  }
+
+                  final filteredList = _selectedFilter == null
+                      ? permissionState.permissionList
+                      : permissionState.permissionList
+                            .where((item) => item.status == _selectedFilter)
+                            .toList();
+
+                  // Use AnimatedSwitcher for smooth transition between "No Data" and "List"
+                  return AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 400),
+                    child: filteredList.isEmpty
+                        ? ListView(
+                            children: const [
+                              SizedBox(height: 200),
+                              Center(
+                                key: ValueKey('empty'),
+                                child: MainText('لا توجد طلبات في هذا القسم'),
+                              ),
+                            ],
+                          )
+                        : ListView.separated(
+                            controller: _scrollController,
+                            physics: const AlwaysScrollableScrollPhysics(),
+                            key: ValueKey(_selectedFilter),
+                            // Forces re-animation on filter change
+                            padding: const EdgeInsets.all(16),
+                            itemCount:
+                                filteredList.length +
+                                (permissionState.isLoadingMore ? 1 : 0),
+                            separatorBuilder: (context, index) => 12.ph,
+
+                            itemBuilder: (context, index) {
+                              if (index == filteredList.length) {
+                                return MainShimmer.single(height: 120);
+                              }
+                              final item = filteredList[index];
+                              return FadeInUp(
+                                duration: const Duration(milliseconds: 300),
+                                delay: Duration(milliseconds: 50 * index),
+                                child: RequestWidget(
+                                  permissionModel: item,
+                                  isLoading:
+                                      permissionState.changeStatusLoading &&
+                                      permissionState.permissionStatusId ==
+                                          item.id,
+                                ),
+                              );
+                            },
+                          ),
+                  );
+                },
+              ),
             ),
           ),
         ],

@@ -102,65 +102,70 @@ class _AttendanceAndAbsenceScreenState
         backgroundColor: Colors.white,
         elevation: 0,
       ),
-      body: attendanceState.isLoading
-          ? _buildShimmerLoading()
-          : attendance.isEmpty
-          ? const Center(child: MainText('لا توجد بيانات حضور لهذا اللاعب'))
-          : SingleChildScrollView(
-              controller: _scrollController,
-              physics: const BouncingScrollPhysics(),
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  HabitCalendarWidget(days: days),
-                  24.ph,
-                  const MainText(
-                    'إحصائيات الشهر',
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                  ),
-                  16.ph,
-                  GridView.count(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    crossAxisCount: 2,
-                    crossAxisSpacing: 16,
-                    mainAxisSpacing: 16,
-                    childAspectRatio: 1.5,
-                    children: [
-                      _buildStatCard(
-                        value: '$attendancePercentage%',
-                        label: 'نسبة الحضور',
-                        icon: Icons.pie_chart_rounded,
-                        color: const Color(0xFF667EEA),
-                      ),
-                      _buildStatCard(
-                        value: totalDays.toString(),
-                        label: 'إجمالي الحصص',
-                        icon: Icons.event_available_rounded,
-                        color: const Color(0xFF764BA2),
-                      ),
-                      _buildStatCard(
-                        value: attendedDays.toString(),
-                        label: 'حضور',
-                        icon: Icons.check_circle_rounded,
-                        color: Colors.green,
-                      ),
-                      _buildStatCard(
-                        value: missedDays.toString(),
-                        label: 'غياب',
-                        icon: Icons.cancel_rounded,
-                        color: Colors.red,
-                      ),
-                    ],
-                  ),
-                  24.ph,
-                  if (attendanceState.isLoadingMore)
-                    MainShimmer.single(height: 80),
-                ],
+      body: RefreshIndicator(
+        onRefresh: () async {
+          _fetchData();
+        },
+        child: attendanceState.isLoading
+            ? _buildShimmerLoading()
+            : attendance.isEmpty
+            ? const Center(child: MainText('لا توجد بيانات حضور لهذا اللاعب'))
+            : SingleChildScrollView(
+                controller: _scrollController,
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    HabitCalendarWidget(days: days),
+                    24.ph,
+                    const MainText(
+                      'إحصائيات الشهر',
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    16.ph,
+                    GridView.count(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      crossAxisCount: 2,
+                      crossAxisSpacing: 16,
+                      mainAxisSpacing: 16,
+                      childAspectRatio: 1.5,
+                      children: [
+                        _buildStatCard(
+                          value: '$attendancePercentage%',
+                          label: 'نسبة الحضور',
+                          icon: Icons.pie_chart_rounded,
+                          color: const Color(0xFF667EEA),
+                        ),
+                        _buildStatCard(
+                          value: totalDays.toString(),
+                          label: 'إجمالي الحصص',
+                          icon: Icons.event_available_rounded,
+                          color: const Color(0xFF764BA2),
+                        ),
+                        _buildStatCard(
+                          value: attendedDays.toString(),
+                          label: 'حضور',
+                          icon: Icons.check_circle_rounded,
+                          color: Colors.green,
+                        ),
+                        _buildStatCard(
+                          value: missedDays.toString(),
+                          label: 'غياب',
+                          icon: Icons.cancel_rounded,
+                          color: Colors.red,
+                        ),
+                      ],
+                    ),
+                    24.ph,
+                    if (attendanceState.isLoadingMore)
+                      MainShimmer.single(height: 80),
+                  ],
+                ),
               ),
-            ),
+      ),
     );
   }
 
