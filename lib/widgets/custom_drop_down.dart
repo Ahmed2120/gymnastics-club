@@ -64,6 +64,11 @@ class _CustomDropdownWidgetState<T> extends State<_CustomDropdownWidget<T>> {
   Widget build(BuildContext context) {
     final hasError = widget.formFieldState.hasError;
     final errorText = widget.formFieldState.errorText;
+    final colorScheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final cardColor = Theme.of(context).cardColor;
+    final shadowColor =
+        isDark ? Colors.black.withOpacity(0.3) : Colors.black.withOpacity(0.05);
 
     return Directionality(
       // To make it RTL for Arabic
@@ -74,15 +79,15 @@ class _CustomDropdownWidgetState<T> extends State<_CustomDropdownWidget<T>> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: cardColor,
               borderRadius: BorderRadius.circular(10),
               border: Border.all(
-                color: hasError ? Colors.red : Colors.grey.shade300,
+                color: hasError ? Colors.red : colorScheme.outline,
                 width: hasError ? 1.5 : 1.0,
               ),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.05),
+                  color: shadowColor,
                   blurRadius: 4,
                   offset: const Offset(0, 2),
                 ),
@@ -92,7 +97,10 @@ class _CustomDropdownWidgetState<T> extends State<_CustomDropdownWidget<T>> {
               child: DropdownButton<T>(
                 value: selectedValue,
                 hint: widget.hint == null ? null : MainText(widget.hint!),
-                icon: const Icon(Icons.arrow_drop_down, color: Colors.black54),
+                icon: Icon(
+                  Icons.arrow_drop_down,
+                  color: colorScheme.onSurfaceVariant,
+                ),
                 isExpanded: true,
                 items: widget.items.map((T value) {
                   return DropdownMenuItem<T>(
@@ -100,7 +108,7 @@ class _CustomDropdownWidgetState<T> extends State<_CustomDropdownWidget<T>> {
                     child: MainText(
                       widget.getText(value),
                       fontSize: 16,
-                      color: Colors.black87,
+                      color: colorScheme.onSurface,
                     ),
                   );
                 }).toList(),

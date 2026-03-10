@@ -17,11 +17,12 @@ class NewsRiverpod extends StateNotifier<NewsState> {
 
   final _newsRepositories = getIT<NewsRepositories>();
 
-  Future<void> getNews() async {
-    if (state.isLoading) return;
+  Future<void> getNews({List<String>? groupIds, bool force = false}) async {
+    if (state.isLoading && !force) return;
     state = state.copyWith(isLoading: true, currentPage: 1, hasMore: true);
     try {
-      final news = await _newsRepositories.getNews(page: 1);
+      print('groupIds???11 $groupIds');
+      final news = await _newsRepositories.getNews(page: 1, groupIds: groupIds);
       state = state.copyWith(
         isLoading: false,
         newsList: news,
@@ -35,12 +36,15 @@ class NewsRiverpod extends StateNotifier<NewsState> {
     }
   }
 
-  Future<void> loadMoreNews() async {
+  Future<void> loadMoreNews({List<String>? groupIds}) async {
     if (state.isLoadingMore || !state.hasMore) return;
 
     state = state.copyWith(isLoadingMore: true);
     try {
-      final news = await _newsRepositories.getNews(page: state.currentPage);
+      final news = await _newsRepositories.getNews(
+        page: state.currentPage,
+        groupIds: groupIds,
+      );
       state = state.copyWith(
         isLoadingMore: false,
         newsList: [...state.newsList, ...news],

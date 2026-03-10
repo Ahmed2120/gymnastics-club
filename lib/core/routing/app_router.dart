@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:gymnastics_club/features/permission/screens/request_permission.dart';
 
 import '../../features/attendance_and_absence.dart';
+import '../../features/auth/screens/forget_password.dart';
 import '../../features/auth/screens/login.dart';
 import '../../features/dashboard.dart';
 import '../../features/permission/screens/permissions_screen.dart';
@@ -14,7 +15,7 @@ final GoRouter router = GoRouter(
   routes: [
     GoRoute(
       path: Routes.login,
-      builder: (context, state) =>  LoginScreen(),
+      builder: (context, state) => const LoginScreen(),
     ),
     GoRoute(
       path: Routes.dashboard,
@@ -22,15 +23,19 @@ final GoRouter router = GoRouter(
     ),
     GoRoute(
       path: Routes.requestPermission,
-      builder: (context, state) => RequestPermission(),
+      builder: (context, state) => const RequestPermission(),
     ),
     GoRoute(
       path: Routes.permissions,
-      builder: (context, state) => PermissionsScreen(),
+      builder: (context, state) => const PermissionsScreen(),
     ),
     GoRoute(
       path: Routes.attendanceAndAbsence,
-      builder: (context, state) => AttendanceAndAbsenceScreen(),
+      builder: (context, state) => const AttendanceAndAbsenceScreen(),
+    ),
+    GoRoute(
+      path: Routes.forgetPassword,
+      builder: (context, state) => const ForgetPasswordScreen(),
     ),
   ],
 );

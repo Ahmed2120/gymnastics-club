@@ -68,7 +68,7 @@ class _RequestPermissionState extends ConsumerState<RequestPermission> {
             12.ph,
             MainTextField(
               controller: _reasonController,
-              borderColor: Colors.black,
+              borderColor: Theme.of(context).colorScheme.outline,
               maxLines: 4,
               hint: 'اكتب السبب هنا...',
               validator: (value) {
@@ -101,7 +101,6 @@ class _RequestPermissionState extends ConsumerState<RequestPermission> {
               if (activeChild == null) return;
 
               final newRequest = PermissionModel(
-                id: DateTime.now().millisecondsSinceEpoch,
                 childName: activeChild.name,
                 date: _selectedDate!,
                 reason: _reasonController.text,

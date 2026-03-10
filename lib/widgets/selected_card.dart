@@ -36,20 +36,26 @@ class SelectedCard extends MainSelectedCard {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final cardColor = Theme.of(context).cardColor;
+    final shadowColor =
+        isDark ? Colors.black.withOpacity(0.3) : Colors.black.withOpacity(0.05);
+
     return GestureDetector(
       onTap: onTap,
       child: Container(
         padding: EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: cardColor,
           borderRadius: BorderRadius.circular(10),
           border: Border.all(
-            color: hasError ? Colors.red : Colors.grey.shade300,
+            color: hasError ? Colors.red : colorScheme.outline,
             width: hasError ? 1.5 : 1.0,
           ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.05),
+              color: shadowColor,
               blurRadius: 4,
               offset: const Offset(0, 2),
             ),
@@ -71,20 +77,26 @@ class SelectedCardWeb extends MainSelectedCard {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final cardColor = Theme.of(context).cardColor;
+    final shadowColor =
+        isDark ? Colors.black.withOpacity(0.3) : Colors.black.withOpacity(0.05);
+
     return GestureDetector(
       onTap: onTap,
       child: Container(
         padding: EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: cardColor,
           borderRadius: BorderRadius.circular(10),
           border: Border.all(
-            color: hasError ? Colors.red : Colors.grey.shade300,
+            color: hasError ? Colors.red : colorScheme.outline,
             width: hasError ? 1.5 : 1.0,
           ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.05),
+              color: shadowColor,
               blurRadius: 4,
               offset: const Offset(0, 2),
             ),

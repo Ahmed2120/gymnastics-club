@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:gymnastics_club/core/routing/app_router.dart';
 import 'package:gymnastics_club/core/utils/extensions/size_extensions.dart';
 import 'package:gymnastics_club/features/profile/profile_controller/attendance_riverpod.dart';
 import 'package:gymnastics_club/features/profile/profile_controller/child_riverpod.dart';
@@ -52,6 +53,8 @@ class _AttendanceAndAbsenceScreenState
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
     ref.listen(childRiverpod, (previous, next) {
       if (previous?.selectedChild?.id != next.selectedChild?.id) {
         _fetchData();
@@ -60,46 +63,61 @@ class _AttendanceAndAbsenceScreenState
     final attendanceState = ref.watch(attendanceRiverpod);
     final attendance = attendanceState.attendanceList;
 
-    // Convert AttendanceModel to DayData
-    final days = attendance
+    // Convert AttendanceModel to DayData and sort chronologically
+    final sortedAttendance = [...attendance];
+    sortedAttendance.sort(
+      (a, b) => (a.date ?? DateTime(0)).compareTo(b.date ?? DateTime(0)),
+    );
+
+    final days = sortedAttendance
+        .where((e) => e.date != null)
         .map(
           (e) => DayData(
-            number: e.date.day,
-            color: e.didAttend ? Colors.green : Colors.red,
-            status: e.didAttend ? DayStatus.completed : DayStatus.missed,
+            number: e.date!.day,
+            color: (e.didAttend ?? false) ? Colors.green : Colors.red,
+            status: (e.didAttend ?? false)
+                ? DayStatus.completed
+                : DayStatus.missed,
           ),
         )
         .toList();
 
-    // Add some upcoming days to make it look like a calendar
-    if (days.isNotEmpty) {
-      final lastDay = attendance
+    // Add up to 5 upcoming days starting from today or the last recorded day
+    final now = DateTime.now();
+    DateTime lastDay = now;
+
+    if (sortedAttendance.isNotEmpty) {
+      final validDates = sortedAttendance
           .map((e) => e.date)
-          .reduce((a, b) => a.isAfter(b) ? a : b);
-      for (int i = 1; i <= 5; i++) {
-        days.add(
-          DayData(
-            number: lastDay.add(Duration(days: i)).day,
-            color: Colors.grey[300]!,
-            status: DayStatus.upcoming,
-          ),
-        );
+          .whereType<DateTime>();
+      if (validDates.isNotEmpty) {
+        lastDay = validDates.reduce((a, b) => a.isAfter(b) ? a : b);
       }
     }
 
+    // Only add upcoming days if the last recorded day is today or in the past
+    for (int i = 1; i <= 5; i++) {
+      final upcomingDate = lastDay.add(Duration(days: i));
+      days.add(
+        DayData(
+          number: upcomingDate.day,
+          color: colorScheme.surfaceVariant,
+          status: DayStatus.upcoming,
+        ),
+      );
+    }
+
     final totalDays = attendance.length;
-    final attendedDays = attendance.where((e) => e.didAttend).length;
+    final attendedDays = attendance.where((e) => e.didAttend ?? false).length;
     final missedDays = totalDays - attendedDays;
     final attendancePercentage = totalDays > 0
         ? (attendedDays / totalDays * 100).toInt()
         : 0;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F7FA),
       appBar: AppBar(
         title: const MainText('الحضور والغياب', fontWeight: FontWeight.bold),
         centerTitle: true,
-        backgroundColor: Colors.white,
         elevation: 0,
       ),
       body: RefreshIndicator(
@@ -199,14 +217,21 @@ class _AttendanceAndAbsenceScreenState
     required IconData icon,
     required Color color,
   }) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final cardColor = Theme.of(context).cardColor;
+    final shadowColor = isDark
+        ? Colors.black.withOpacity(0.3)
+        : color.withOpacity(0.1);
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cardColor,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: color.withOpacity(0.1),
+            color: shadowColor,
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -224,9 +249,13 @@ class _AttendanceAndAbsenceScreenState
                 value,
                 fontSize: 22,
                 fontWeight: FontWeight.bold,
-                color: Colors.black87,
+                color: colorScheme.onSurface,
               ),
-              MainText(label, fontSize: 12, color: Colors.grey.shade600),
+              MainText(
+                label,
+                fontSize: 12,
+                color: colorScheme.onSurfaceVariant,
+              ),
             ],
           ),
         ],
@@ -252,14 +281,21 @@ class HabitCalendarWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final cardColor = Theme.of(context).cardColor;
+    final shadowColor = isDark
+        ? Colors.black.withOpacity(0.3)
+        : Colors.black.withOpacity(0.04);
+
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cardColor,
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: shadowColor,
             blurRadius: 20,
             offset: const Offset(0, 8),
           ),
@@ -296,7 +332,7 @@ class HabitCalendarWidget extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.bold,
-                    color: Colors.grey.shade400,
+                    color: colorScheme.onSurfaceVariant.withOpacity(0.7),
                   ),
                 ),
               );
@@ -336,6 +372,8 @@ class HabitCalendarWidget extends StatelessWidget {
   }
 
   Widget _legendItem(Color color, String label) {
+    final colorScheme = Theme.of(navigatorKey.currentContext!).colorScheme;
+
     return Row(
       children: [
         Container(
@@ -344,7 +382,7 @@ class HabitCalendarWidget extends StatelessWidget {
           decoration: BoxDecoration(color: color, shape: BoxShape.circle),
         ),
         4.pw,
-        MainText(label, fontSize: 10, color: Colors.grey.shade600),
+        MainText(label, fontSize: 10, color: colorScheme.onSurfaceVariant),
       ],
     );
   }
@@ -358,6 +396,8 @@ class DayCircle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
     Color getBgColor() {
       switch (day.status) {
         case DayStatus.completed:
@@ -365,13 +405,13 @@ class DayCircle extends StatelessWidget {
         case DayStatus.missed:
           return Colors.red.shade400;
         case DayStatus.upcoming:
-          return Colors.grey.shade100;
+          return colorScheme.surfaceVariant;
       }
     }
 
     Color getTextColor() {
       return day.status == DayStatus.upcoming
-          ? Colors.grey.shade500
+          ? colorScheme.onSurfaceVariant
           : Colors.white;
     }
 

@@ -48,6 +48,9 @@ class _DashboardState extends State<Dashboard> {
   }
 
   Widget _buildBottomNavigationBar(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return BottomNavigationBar(
       currentIndex: _currentIndex,
       onTap: (index) {
@@ -56,8 +59,10 @@ class _DashboardState extends State<Dashboard> {
         setState(() {});
       },
       type: BottomNavigationBarType.fixed,
-      selectedItemColor: Theme.of(context).primaryColor,
-      unselectedItemColor: Colors.grey,
+      backgroundColor: colorScheme.surface,
+      selectedItemColor: colorScheme.primary,
+      unselectedItemColor:
+          isDark ? colorScheme.onSurface.withOpacity(0.7) : Colors.grey,
       selectedFontSize: 12,
       unselectedFontSize: 12,
       elevation: 8,

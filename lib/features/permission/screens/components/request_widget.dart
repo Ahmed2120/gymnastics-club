@@ -18,15 +18,22 @@ class RequestWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final cardColor = Theme.of(context).cardColor;
+    final shadowColor = isDark
+        ? Colors.black.withOpacity(0.3)
+        : Colors.black.withOpacity(0.05);
+
     return Container(
       padding: EdgeInsets.all(20),
       width: double.infinity,
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cardColor,
         borderRadius: BorderRadius.circular(10),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
+            color: shadowColor,
             offset: const Offset(0, 4),
             blurRadius: 8,
           ),
@@ -54,26 +61,30 @@ class RequestWidget extends StatelessWidget {
             'الطفل: ${permissionModel.childName}',
             fontSize: 16,
             fontWeight: FontWeight.w400,
-            color: Colors.black.withValues(alpha: 0.6),
+            color: colorScheme.onSurfaceVariant,
           ),
           12.ph,
           MainText(
-            'التاريخ: ${DateConverter.dateToReadableDate(permissionModel.date.toIso8601String())}',
+            'التاريخ: ${permissionModel.date != null ? DateConverter.dateToReadableDate(permissionModel.date!.toIso8601String()) : "غير محدد"}',
             fontSize: 16,
             fontWeight: FontWeight.w400,
-            color: Colors.black.withValues(alpha: 0.6),
+            color: colorScheme.onSurfaceVariant,
           ),
           12.ph,
           MainText(
             'السبب: ${permissionModel.reason}',
             fontSize: 16,
             fontWeight: FontWeight.w400,
-            color: Colors.black.withValues(alpha: 0.6),
+            color: colorScheme.onSurfaceVariant,
           ),
-          if(permissionModel.status == PermissionStatusEnum.rejected)...[
+          if (permissionModel.status == PermissionStatusEnum.rejected) ...[
             12.ph,
-            MainText('الرد: عذراً، يوم البطولة لا يمكن الغياب', fontSize: 16, color: statusColor(permissionModel.status),),
-          ]
+            MainText(
+              'الرد: عذراً، يوم البطولة لا يمكن الغياب',
+              fontSize: 16,
+              color: statusColor(permissionModel.status),
+            ),
+          ],
         ],
       ),
     );

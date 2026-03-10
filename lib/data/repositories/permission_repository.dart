@@ -1,34 +1,41 @@
-import '../dummy_data.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../core/services/init_getit.dart';
+import '../../core/services/supabase_service.dart';
 import '../models/models/permission_model.dart';
 
 class PermissionRepository {
+  final SupabaseClient _client = getIT<SupabaseService>().client;
+
   Future<List<PermissionModel>> getRequests({
+    required String childName,
     int page = 1,
     int limit = 10,
   }) async {
-    await Future.delayed(const Duration(seconds: 1));
     try {
-      final startIndex = (page - 1) * limit;
-      final requests = dummyPermissionList
-          .skip(startIndex)
-          .take(limit)
+      final from = (page - 1) * limit;
+      final to = from + limit - 1;
+
+      final response = await _client
+          .from('permissions')
+          .select()
+          .eq('employeeName', childName)
+          .order('id', ascending: false)
+          .range(from, to);
+
+      return (response as List)
           .map<PermissionModel>((e) => PermissionModel.fromJson(e))
           .toList();
-
-      return requests;
     } catch (e) {
-      print(e);
+      print('Error getting permission requests: $e');
       rethrow;
     }
   }
 
   Future<void> submitRequest(PermissionModel request) async {
-    await Future.delayed(const Duration(seconds: 1));
     try {
-      (dummyPermissionList as List).add(request.toJson());
-    } catch (e, s) {
-      print(e);
-      print(s);
+      await _client.from('permissions').insert(request.toJson());
+    } catch (e) {
+      print('Error submitting permission request: $e');
       rethrow;
     }
   }

@@ -6,12 +6,17 @@ import '../../data/repositories/permission_repository.dart';
 import '../../data/repositories/achievement_repository.dart';
 import '../../data/repositories/schedule_repository.dart';
 import '../../data/repositories/child_repository.dart';
+import '../../data/repositories/auth_repository.dart';
+import '../services/supabase_service.dart';
 
 GetIt getIT = GetIt.instance;
 
 void setupLocator() {
+  getIT.registerLazySingleton<SupabaseService>(() => SupabaseService());
   getIT.registerLazySingleton<NewsRepositories>(() => NewsRepositories());
-  getIT.registerLazySingleton<AttendanceRepository>(() => AttendanceRepository());
+  getIT.registerLazySingleton<AttendanceRepository>(
+    () => AttendanceRepository(),
+  );
 
   getIT.registerLazySingleton<PermissionRepository>(
     () => PermissionRepository(),
@@ -22,4 +27,5 @@ void setupLocator() {
   );
   getIT.registerLazySingleton<ScheduleRepository>(() => ScheduleRepository());
   getIT.registerLazySingleton<ChildRepository>(() => ChildRepository());
+  getIT.registerLazySingleton<AuthRepository>(() => AuthRepository());
 }

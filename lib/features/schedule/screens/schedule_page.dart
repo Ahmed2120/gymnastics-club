@@ -28,13 +28,20 @@ class _SchedulePageState extends ConsumerState<SchedulePage> {
     Future.microtask(() {
       final child = ref.read(childRiverpod).selectedChild;
       if (child != null) {
-        ref.read(scheduleRiverpod.notifier).getSchedule(child.group);
+        ref.read(scheduleRiverpod.notifier).getSchedule(child.groupId);
       }
     });
   }
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final cardColor = Theme.of(context).cardColor;
+    final shadowColor = isDark
+        ? Colors.black.withOpacity(0.3)
+        : Colors.black.withOpacity(0.05);
+
     ref.listen(childRiverpod, (previous, next) {
       if (previous?.selectedChild?.id != next.selectedChild?.id) {
         _fetchData();
@@ -61,10 +68,10 @@ class _SchedulePageState extends ConsumerState<SchedulePage> {
                       width: double.infinity,
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(16),
-                        color: Colors.white,
+                        color: cardColor,
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.05),
+                            color: shadowColor,
                             offset: Offset(0, 2),
                             blurRadius: 4,
                           ),
@@ -117,11 +124,11 @@ class _SchedulePageState extends ConsumerState<SchedulePage> {
                             child: Container(
                               width: double.infinity,
                               decoration: BoxDecoration(
-                                color: Colors.white,
+                                color: cardColor,
                                 borderRadius: BorderRadius.circular(20),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: Colors.black.withOpacity(0.04),
+                                    color: shadowColor,
                                     offset: const Offset(0, 8),
                                     blurRadius: 16,
                                   ),
@@ -134,8 +141,10 @@ class _SchedulePageState extends ConsumerState<SchedulePage> {
                                       horizontal: 20,
                                       vertical: 12,
                                     ),
-                                    decoration: const BoxDecoration(
-                                      color: Color(0xFFF5F7FF),
+                                    decoration: BoxDecoration(
+                                      color: isDark
+                                          ? colorScheme.surfaceVariant
+                                          : const Color(0xFFF5F7FF),
                                       borderRadius: BorderRadius.only(
                                         topLeft: Radius.circular(20),
                                         topRight: Radius.circular(20),
@@ -143,47 +152,29 @@ class _SchedulePageState extends ConsumerState<SchedulePage> {
                                     ),
                                     child: Row(
                                       children: [
-                                        const Icon(
+                                        Icon(
                                           Icons.calendar_today_rounded,
                                           size: 18,
-                                          color: Color(0xFF667eea),
+                                          color: colorScheme.primary,
                                         ),
                                         10.pw,
                                         MainText(
                                           item.day.tr(),
                                           fontSize: 18,
                                           fontWeight: FontWeight.bold,
-                                          color: const Color(0xFF667eea),
+                                          color: colorScheme.primary,
                                         ),
                                       ],
                                     ),
                                   ),
                                   Padding(
                                     padding: const EdgeInsets.all(20),
-                                    child: Row(
-                                      children: [
-                                        Expanded(
-                                          child: _scheduleInfoTile(
-                                            icon: Icons.access_time_rounded,
-                                            title: 'الوقت',
-                                            value: item.startTime,
-                                            color: Colors.orange.shade700,
-                                          ),
-                                        ),
-                                        Container(
-                                          height: 40,
-                                          width: 1,
-                                          color: Colors.grey.withOpacity(0.2),
-                                        ),
-                                        Expanded(
-                                          child: _scheduleInfoTile(
-                                            icon: Icons.person_outline_rounded,
-                                            title: 'المدرب',
-                                            value: item.trainer,
-                                            color: Colors.blue.shade700,
-                                          ),
-                                        ),
-                                      ],
+                                    child: _scheduleInfoTile(
+                                      icon: Icons.access_time_rounded,
+                                      title: 'الوقت',
+                                      value:
+                                          '${item.startTime} - ${item.endTime}',
+                                      color: Colors.orange.shade700,
                                     ),
                                   ),
                                 ],
@@ -192,7 +183,6 @@ class _SchedulePageState extends ConsumerState<SchedulePage> {
                           );
                         },
                       ),
-                    const SizedBox(height: 80),
                   ],
                 ),
               ),
@@ -206,6 +196,8 @@ class _SchedulePageState extends ConsumerState<SchedulePage> {
     required String value,
     required Color color,
   }) {
+    final colorScheme = Theme.of(context).colorScheme;
+
     return Column(
       children: [
         Row(
@@ -213,7 +205,7 @@ class _SchedulePageState extends ConsumerState<SchedulePage> {
           children: [
             Icon(icon, size: 16, color: color),
             6.pw,
-            MainText(title, fontSize: 13, color: Colors.grey.shade600),
+            MainText(title, fontSize: 13, color: colorScheme.onSurfaceVariant),
           ],
         ),
         8.ph,

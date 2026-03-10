@@ -53,6 +53,13 @@ class _AchievementPageState extends ConsumerState<AchievementPage> {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final cardColor = Theme.of(context).cardColor;
+    final shadowColor = isDark
+        ? Colors.black.withOpacity(0.3)
+        : Colors.black.withOpacity(0.05);
+
     ref.listen(childRiverpod, (previous, next) {
       if (previous?.selectedChild?.id != next.selectedChild?.id) {
         _fetchData();
@@ -95,11 +102,11 @@ class _AchievementPageState extends ConsumerState<AchievementPage> {
                       padding: const EdgeInsets.all(20),
                       width: double.infinity,
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: cardColor,
                         borderRadius: BorderRadius.circular(10),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withOpacity(0.05),
+                            color: shadowColor,
                             offset: const Offset(0, 4),
                             blurRadius: 8,
                           ),
@@ -141,19 +148,21 @@ class _AchievementPageState extends ConsumerState<AchievementPage> {
                                   item.title.tr(),
                                   fontSize: 20,
                                   fontWeight: FontWeight.w700,
-                                  color: const Color(0xFF667eea),
+                                  color: colorScheme.primary,
                                 ),
                                 12.ph,
                                 MainText(
-                                  DateFormat(
-                                    'd MMMM yyyy',
-                                    'ar',
-                                  ).format(item.date),
+                                  item.date != null
+                                      ? DateFormat(
+                                          'd MMMM yyyy',
+                                          'ar',
+                                        ).format(item.date!)
+                                      : 'تاريخ غير محدد',
                                   fontSize: 14,
-                                  color: Colors.grey,
+                                  color: colorScheme.onSurfaceVariant,
                                 ),
                                 12.ph,
-                                MainText(item.venue, fontSize: 18),
+                                MainText(item.venue ?? '', fontSize: 18),
                               ],
                             ),
                           ),

@@ -17,11 +17,13 @@ class Skeleton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
     return Container(
       height: height,
       width: width,
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: colorScheme.surfaceVariant,
         shape: shape,
         borderRadius: shape == BoxShape.rectangle
             ? BorderRadius.all(Radius.circular(borderRadius))
@@ -64,36 +66,38 @@ class MainShimmer extends StatelessWidget {
         padding: const EdgeInsets.all(16),
         itemCount: itemCount,
         separatorBuilder: (_, __) => const SizedBox(height: 16),
-        itemBuilder: (_, __) => Container(
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(10),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  const Skeleton(height: 44, width: 44, borderRadius: 22),
-                  const SizedBox(width: 12),
-                  const Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Skeleton(height: 18, width: 150),
-                        SizedBox(height: 6),
-                        Skeleton(height: 12, width: 100),
-                      ],
+        itemBuilder: (_, __) => Builder(
+          builder: (context) => Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: Theme.of(context).cardColor,
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    const Skeleton(height: 44, width: 44, borderRadius: 22),
+                    const SizedBox(width: 12),
+                    const Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Skeleton(height: 18, width: 150),
+                          SizedBox(height: 6),
+                          Skeleton(height: 12, width: 100),
+                        ],
+                      ),
                     ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-              const Skeleton(height: 12, width: double.infinity),
-              const SizedBox(height: 6),
-              const Skeleton(height: 12, width: 200),
-            ],
+                  ],
+                ),
+                const SizedBox(height: 16),
+                const Skeleton(height: 12, width: double.infinity),
+                const SizedBox(height: 6),
+                const Skeleton(height: 12, width: 200),
+              ],
+            ),
           ),
         ),
       ),
@@ -113,26 +117,28 @@ class MainShimmer extends StatelessWidget {
   /// Shimmer for Statistics Cards (Attendance)
   factory MainShimmer.statCard() {
     return MainShimmer._(
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-        ),
-        child: const Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Skeleton(height: 28, width: 28, borderRadius: 6),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Skeleton(height: 22, width: 60),
-                SizedBox(height: 4),
-                Skeleton(height: 12, width: 80),
-              ],
-            ),
-          ],
+      child: Builder(
+        builder: (context) => Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Theme.of(context).cardColor,
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: const Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Skeleton(height: 28, width: 28, borderRadius: 6),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Skeleton(height: 22, width: 60),
+                  SizedBox(height: 4),
+                  Skeleton(height: 12, width: 80),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -147,29 +153,31 @@ class MainShimmer extends StatelessWidget {
         padding: const EdgeInsets.all(16),
         itemCount: itemCount,
         separatorBuilder: (_, __) => const SizedBox(height: 12),
-        itemBuilder: (_, __) => Container(
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(10),
-          ),
-          child: const Row(
-            children: [
-              Skeleton(height: 60, width: 60, shape: BoxShape.circle),
-              SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Skeleton(height: 20, width: 140),
-                    SizedBox(height: 12),
-                    Skeleton(height: 14, width: 100),
-                    SizedBox(height: 12),
-                    Skeleton(height: 16, width: double.infinity),
-                  ],
+        itemBuilder: (_, __) => Builder(
+          builder: (context) => Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: Theme.of(context).cardColor,
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: const Row(
+              children: [
+                Skeleton(height: 60, width: 60, shape: BoxShape.circle),
+                SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Skeleton(height: 20, width: 140),
+                      SizedBox(height: 12),
+                      Skeleton(height: 14, width: 100),
+                      SizedBox(height: 12),
+                      Skeleton(height: 16, width: double.infinity),
+                    ],
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
@@ -193,48 +201,50 @@ class MainShimmer extends StatelessWidget {
   /// Shimmer for a full calendar layout
   factory MainShimmer.calendar() {
     return MainShimmer._(
-      child: Container(
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(24),
-        ),
-        child: Column(
-          children: [
-            const Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Skeleton(height: 20, width: 80),
-                Skeleton(height: 20, width: 120),
-              ],
-            ),
-            const SizedBox(height: 20),
-            GridView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 7,
-                crossAxisSpacing: 8,
-                childAspectRatio: 1,
+      child: Builder(
+        builder: (context) => Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: Theme.of(context).cardColor,
+            borderRadius: BorderRadius.circular(24),
+          ),
+          child: Column(
+            children: [
+              const Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Skeleton(height: 20, width: 80),
+                  Skeleton(height: 20, width: 120),
+                ],
               ),
-              itemCount: 7,
-              itemBuilder: (_, __) =>
-                  const Center(child: Skeleton(height: 12, width: 20)),
-            ),
-            const SizedBox(height: 18),
-            GridView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 7,
-                crossAxisSpacing: 10,
-                mainAxisSpacing: 10,
-                childAspectRatio: 1,
+              const SizedBox(height: 20),
+              GridView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 7,
+                  crossAxisSpacing: 8,
+                  childAspectRatio: 1,
+                ),
+                itemCount: 7,
+                itemBuilder: (_, __) =>
+                    const Center(child: Skeleton(height: 12, width: 20)),
               ),
-              itemCount: 31,
-              itemBuilder: (_, __) => const Skeleton(shape: BoxShape.circle),
-            ),
-          ],
+              const SizedBox(height: 18),
+              GridView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 7,
+                  crossAxisSpacing: 10,
+                  mainAxisSpacing: 10,
+                  childAspectRatio: 1,
+                ),
+                itemCount: 31,
+                itemBuilder: (_, __) => const Skeleton(shape: BoxShape.circle),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -254,28 +264,30 @@ class MainShimmer extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 16),
           itemCount: itemCount,
           separatorBuilder: (_, __) => const SizedBox(width: 12),
-          itemBuilder: (_, __) => Container(
-            width: width,
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Skeleton(height: 20, width: 180),
-                const SizedBox(height: 12),
-                const Skeleton(height: 14, width: 240),
-                const SizedBox(height: 8),
-                const Skeleton(height: 14, width: 200),
-                const Spacer(),
-                Skeleton(
-                  height: height * 0.5,
-                  width: double.infinity,
-                  borderRadius: 10,
-                ),
-              ],
+          itemBuilder: (_, __) => Builder(
+            builder: (context) => Container(
+              width: width,
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Theme.of(context).cardColor,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Skeleton(height: 20, width: 180),
+                  const SizedBox(height: 12),
+                  const Skeleton(height: 14, width: 240),
+                  const SizedBox(height: 8),
+                  const Skeleton(height: 14, width: 200),
+                  const Spacer(),
+                  Skeleton(
+                    height: height * 0.5,
+                    width: double.infinity,
+                    borderRadius: 10,
+                  ),
+                ],
+              ),
             ),
           ),
         ),
@@ -285,9 +297,11 @@ class MainShimmer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
     return Shimmer.fromColors(
-      baseColor: Colors.grey.shade200,
-      highlightColor: Colors.white,
+      baseColor: colorScheme.surfaceVariant,
+      highlightColor: colorScheme.surface,
       period: const Duration(milliseconds: 1200),
       child: child,
     );

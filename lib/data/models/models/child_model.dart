@@ -2,27 +2,39 @@ class ChildModel {
   final int id;
   final String name;
   final String parentPhone;
-  final String age;
-  final String group;
+  final String age; // Maps to birth_date
+  final String groupId;
+  final String groupName;
   final String level;
+  final String? imageUrl;
+  final String? parentName;
 
   ChildModel({
     required this.id,
     required this.name,
     required this.parentPhone,
     required this.age,
-    required this.group,
+    required this.groupId,
+    required this.groupName,
     required this.level,
+    this.imageUrl,
+    this.parentName,
   });
 
   factory ChildModel.fromJson(Map<String, dynamic> json) {
+    final gid = json['group']?.toString() ?? '';
+    final gname = json['group_name']?.toString() ?? '';
+
     return ChildModel(
       id: json['id'],
-      name: json['name'],
-      parentPhone: json['parent_phone'],
-      age: json['birth_date'],
-      group: json['group'],
-      level: json['level'],
+      name: json['name'] ?? '',
+      parentPhone: json['parent_phone'] ?? '',
+      age: json['birth_date'] ?? '',
+      groupId: gid,
+      groupName: gname,
+      level: json['level'] ?? '',
+      imageUrl: json['image_url'],
+      parentName: json['parent_name'],
     );
   }
 
@@ -32,8 +44,11 @@ class ChildModel {
       "name": name,
       "parent_phone": parentPhone,
       "birth_date": age,
-      "group": group,
+      "group": groupId,
+      "group_name": groupName,
       "level": level,
+      "image_url": imageUrl,
+      "parent_name": parentName,
     };
   }
 
@@ -42,23 +57,12 @@ class ChildModel {
   bool operator ==(Object other) {
     if (identical(this, other)) return true;
 
-    return other is ChildModel &&
-        other.id == id &&
-        other.name == name &&
-        other.parentPhone == parentPhone &&
-        other.age == age &&
-        other.group == group &&
-        other.level == level;
+    return other is ChildModel && other.id == id;
   }
 
   // Override hashCode
   @override
   int get hashCode {
-    return id.hashCode ^
-    name.hashCode ^
-    parentPhone.hashCode ^
-    age.hashCode ^
-    group.hashCode ^
-    level.hashCode;
+    return id.hashCode;
   }
 }

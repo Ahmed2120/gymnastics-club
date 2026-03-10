@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -41,9 +42,12 @@ class _HomePageState extends ConsumerState<HomePage> {
     }
   }
 
-  void _fetchNews() {
+  void _fetchNews({bool force = false}) {
     Future.microtask(() {
-      ref.read(newsRiverpod.notifier).getNews();
+      final children = ref.read(childRiverpod).childrenList;
+      final groupIds = children.map((c) => c.groupId).toList();
+      print('groupIds??? $groupIds');
+      ref.read(newsRiverpod.notifier).getNews(groupIds: groupIds, force: force);
     });
   }
 
@@ -51,16 +55,29 @@ class _HomePageState extends ConsumerState<HomePage> {
     Future.microtask(() {
       final child = ref.read(childRiverpod).selectedChild;
       if (child != null) {
-        ref.read(scheduleRiverpod.notifier).getSchedule(child.group);
+        ref.read(scheduleRiverpod.notifier).getSchedule(child.groupName);
       }
     });
   }
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final cardColor = Theme.of(context).cardColor;
+    final shadowColor = isDark
+        ? Colors.black.withOpacity(0.3)
+        : Colors.black.withOpacity(0.05);
+
     ref.listen(childRiverpod, (previous, next) {
       if (previous?.selectedChild?.id != next.selectedChild?.id) {
         _fetchChildData();
+      }
+
+      // If the children list just loaded, fetch the news based on their groups
+      if ((previous == null || previous.childrenList.isEmpty) &&
+          next.childrenList.isNotEmpty) {
+        _fetchNews(force: true);
       }
     });
 
@@ -68,7 +85,8 @@ class _HomePageState extends ConsumerState<HomePage> {
       appBar: AppBar(title: MainText('الرئيسية'), centerTitle: true),
       body: RefreshIndicator(
         onRefresh: () async {
-          await ref.read(newsRiverpod.notifier).getNews();
+          await ref.read(childRiverpod.notifier).getChildren();
+          _fetchNews(force: true);
           _fetchChildData();
         },
         child: CustomScrollView(
@@ -144,9 +162,17 @@ class _HomePageState extends ConsumerState<HomePage> {
                       width: double.infinity,
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(16),
-                        color: Colors.white,
-                        gradient: const LinearGradient(
-                          colors: [Color(0xFF7FB6FD), Color(0xFFC0DAFB)],
+                        color: cardColor,
+                        gradient: LinearGradient(
+                          colors: isDark
+                              ? [
+                                  const Color(0xFF1E1E1E),
+                                  const Color(0xFF2C2C2C),
+                                ]
+                              : [
+                                  const Color(0xFF7FB6FD),
+                                  const Color(0xFFC0DAFB),
+                                ],
                           begin: Alignment.centerRight,
                           end: Alignment.centerLeft,
                         ),
@@ -170,7 +196,7 @@ class _HomePageState extends ConsumerState<HomePage> {
                                   'التدريب القادم'.tr(),
                                   fontSize: 18,
                                   fontWeight: FontWeight.w700,
-                                  color: const Color(0xFF1565c0),
+                                  color: colorScheme.onSurface,
                                 ),
                                 12.ph,
                                 Consumer(
@@ -250,6 +276,7 @@ class _HomePageState extends ConsumerState<HomePage> {
                                     return MainText(
                                       '${nextSession.day} الساعة ${nextSession.startTime}',
                                       fontSize: 14,
+                                      color: colorScheme.onSurfaceVariant,
                                     );
                                   },
                                 ),
@@ -264,6 +291,7 @@ class _HomePageState extends ConsumerState<HomePage> {
                       'آخر الأخبار'.tr(),
                       fontSize: 18,
                       fontWeight: FontWeight.w600,
+                      color: colorScheme.onSurface,
                     ),
                     22.ph,
                   ],
@@ -298,11 +326,11 @@ class _HomePageState extends ConsumerState<HomePage> {
                               vertical: 16,
                             ),
                             decoration: BoxDecoration(
-                              color: Colors.white,
+                              color: cardColor,
                               borderRadius: BorderRadius.circular(10),
                               boxShadow: [
                                 BoxShadow(
-                                  color: Colors.black.withOpacity(0.05),
+                                  color: shadowColor,
                                   offset: const Offset(0, 4),
                                   blurRadius: 8,
                                 ),
@@ -322,7 +350,7 @@ class _HomePageState extends ConsumerState<HomePage> {
                                 MainText(
                                   item.newsContent,
                                   fontSize: 14,
-                                  color: Colors.grey.shade500,
+                                  color: colorScheme.onSurfaceVariant,
                                   maxLines: 3,
                                   overflow: TextOverflow.ellipsis,
                                 ),
@@ -332,7 +360,22 @@ class _HomePageState extends ConsumerState<HomePage> {
                                   width: double.infinity,
                                   child: ClipRRect(
                                     borderRadius: BorderRadius.circular(10),
-                                    child: Image.asset(
+                                    child:
+                                    item.imageUrl != null &&
+                                        item.imageUrl!.isNotEmpty
+                                        ? CachedNetworkImage(
+                                      imageUrl: item.imageUrl!,
+                                      fit: BoxFit.cover,
+                                      placeholder: (context, url) => Center(
+                                        child: CircularProgressIndicator(),
+                                      ),
+                                      errorWidget: (context, url, error) =>
+                                          Image.asset(
+                                            AppAssets.achievement,
+                                            fit: BoxFit.cover,
+                                          ),
+                                    )
+                                        : Image.asset(
                                       AppAssets.achievement,
                                       fit: BoxFit.cover,
                                     ),

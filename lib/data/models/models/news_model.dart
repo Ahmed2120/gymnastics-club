@@ -2,19 +2,21 @@ class NewsModel {
   final int id;
   final String title;
   final String newsContent;
-  final String typeId;
+  final String? type;
   final String? groupId;
   final String newsDuration;
   final String publishDate;
+  final String? imageUrl;
 
   NewsModel({
     required this.id,
     required this.title,
     required this.newsContent,
-    required this.typeId,
-    required this.groupId,
+    this.type,
+    this.groupId,
     required this.publishDate,
     required this.newsDuration,
+    this.imageUrl,
   });
 
   /// From JSON
@@ -23,10 +25,11 @@ class NewsModel {
       id: json['id'],
       title: json['title'],
       newsContent: json['news_content'],
-      typeId: json['typeId'],
-      groupId: json['groupId'],
+      type: json['type'],
+      groupId: json['group_id']?.toString(), // Use underscore to match schema
       publishDate: json['publish_date'],
       newsDuration: json['news_duration'],
+      imageUrl: json['image_url'],
     );
   }
 
@@ -36,10 +39,11 @@ class NewsModel {
       'id': id,
       'title': title,
       'news_content': newsContent,
-      'typeId': typeId,
-      'groupId': groupId,
+      'type': type,
+      'group_id': groupId,
       'news_duration': newsDuration,
       'publish_date': publishDate,
+      'image_url': imageUrl,
     };
   }
 }
