@@ -11,10 +11,10 @@ class ChildRepository {
       final effectivePhone = phone ?? _client.auth.currentUser?.phone;
       if (effectivePhone == null) return [];
 
-      final response = await _client
-          .from('children')
-          .select()
-          .eq('parent_phone', effectivePhone);
+      final response = await _client.rpc(
+        'api_get_children_by_parent',
+        params: {'p_phone': effectivePhone},
+      );
 
       return (response as List)
           .map<ChildModel>((e) => ChildModel.fromJson(e))

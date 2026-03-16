@@ -15,11 +15,12 @@ class PermissionRiverpod extends StateNotifier<PermissionState> {
 
   final _permissionRepositories = getIT<PermissionRepository>();
 
-  Future<void> getPermissionList({required String childName}) async {
+  Future<void> getPermissionList({required String childName, String? status}) async {
     state = state.copyWith(isLoading: true, currentPage: 1, hasMore: true);
     try {
       final permissionList = await _permissionRepositories.getRequests(
         childName: childName,
+        status: status,
         page: 1,
       );
       state = state.copyWith(
@@ -34,13 +35,14 @@ class PermissionRiverpod extends StateNotifier<PermissionState> {
     }
   }
 
-  Future<void> loadMorePermissions({required String childName}) async {
+  Future<void> loadMorePermissions({required String childName, String? status}) async {
     if (state.isLoadingMore || !state.hasMore) return;
 
     state = state.copyWith(isLoadingMore: true);
     try {
       final permissionList = await _permissionRepositories.getRequests(
         childName: childName,
+        status: status,
         page: state.currentPage,
       );
       state = state.copyWith(

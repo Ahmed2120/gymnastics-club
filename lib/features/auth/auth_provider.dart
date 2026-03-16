@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/services/init_getit.dart';
 import '../../data/repositories/auth_repository.dart';
+import '../../core/services/fcm_service.dart';
 
 final authRepositoryProvider = Provider<AuthRepository>((ref) {
   return getIT<AuthRepository>();
@@ -60,6 +61,8 @@ class AuthNotifier extends Notifier<AuthState> {
       final success = await _repository.signInWithPassword(phone, password);
       if (success) {
         state = state.copyWith(isLoading: false, phoneNumber: phone);
+        // Request and save FCM Token
+        FcmService.updateTokenForParent(phone);
         return true;
       } else {
         state = state.copyWith(

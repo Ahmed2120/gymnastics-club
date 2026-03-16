@@ -10,38 +10,44 @@ class NewsRepositories {
     required int page,
     int limit = 10,
     List<String>? groupIds,
+    String? phone,
   }) async {
     try {
-      print('groups::::: $groupIds');
-      final from = (page - 1) * limit;
-      final to = from + limit - 1;
+      // All filtering (expiry, group, ordering, pagination) is done server-side
+      // inside the api_get_news Supabase RPC function.
+      final response = await _client.rpc(
+        'api_get_news',
+        params: {
+          'p_page': page,
+          'p_group_ids': groupIds, // null = global news only
+          'p_phone': phone,
+        },
+      );
 
-      // Filter: global news (group_id is null) OR news in specific groups
-      var query = _client.from('news').select();
-
-      if (groupIds != null && groupIds.isNotEmpty) {
-        // News where group_id is null OR in groupIds
-        // Supabase filter for OR can be tricky with nulls.
-        // We'll use the RPC if available, or a filter string.
-        query = query.or(
-          'group_id.is.null,group_id.in.(${groupIds.join(",")})',
-        );
-      } else {
-        query = query.filter('group_id', 'is', null);
-      }
-
-      final response = await query
-          .order('id', ascending: false)
-          .range(from, to);
-
-      print('.......................');
-      print(groupIds);
+      if (response == null) return [];
 
       return (response as List)
           .map<NewsModel>((e) => NewsModel.fromJson(e))
           .toList();
     } catch (e) {
       print('Error getting news: $e');
+      rethrow;
+    }
+  }
+
+  Future<Map<String, dynamic>> toggleLike(int newsId, String phone) async {
+    try {
+      final response = await _client.rpc(
+        'api_toggle_news_like',
+        params: {
+          'p_news_id': newsId,
+          'p_phone': phone,
+        },
+      );
+      print(response);
+      return Map<String, dynamic>.from(response);
+    } catch (e) {
+      print('Error toggling like: $e');
       rethrow;
     }
   }

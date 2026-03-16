@@ -12,27 +12,23 @@ class AttendanceRepository {
     int limit = 10,
   }) async {
     try {
-      final from = (page - 1) * limit;
-      final to = from + limit - 1;
 
       // Note: The system analysis suggests attendance table has child_id.
       // We might need to join with other tables if the model requires 'name' or 'group'.
       // For history, we'll fetch from the 'attendance' table.
-      final response = await _client
-          .from('attendance')
-          .select()
-          .eq('childId', childId)
-          .order('date', ascending: false)
-          .range(from, to);
-print(response);
+      // Using api_get_child_attendance RPC for server-side pagination
+      final response = await _client.rpc('api_get_child_attendance', params: {
+        'p_child_id': childId,
+        'p_page': page,
+        'p_limit': limit,
+      });
+      print(response);
       return (response as List).map((e) {
         // Map DB fields to Model fields if they differ
-        // DB might have 'status' instead of 'didAttend'
         return AttendanceModel.fromJson({
           ...e,
           'childId': e['childId'],
-          'didAttend':
-              e['didAttend'], // Assuming status is 'Present'/'Absent'
+          'didAttend': e['didAttend'], 
         });
       }).toList();
     } catch (e) {

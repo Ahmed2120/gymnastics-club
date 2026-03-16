@@ -8,19 +8,17 @@ class PermissionRepository {
 
   Future<List<PermissionModel>> getRequests({
     required String childName,
+    String? status,
     int page = 1,
     int limit = 10,
   }) async {
     try {
-      final from = (page - 1) * limit;
-      final to = from + limit - 1;
-
-      final response = await _client
-          .from('permissions')
-          .select()
-          .eq('employeeName', childName)
-          .order('id', ascending: false)
-          .range(from, to);
+      final response = await _client.rpc('api_get_permissions', params: {
+        'p_name': childName,
+        'p_status': status ?? '',
+        'p_page': page,
+        'p_limit': limit,
+      });
 
       return (response as List)
           .map<PermissionModel>((e) => PermissionModel.fromJson(e))

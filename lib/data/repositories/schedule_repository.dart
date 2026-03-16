@@ -8,10 +8,10 @@ class ScheduleRepository {
 
   Future<List<ScheduleModel>> getSchedule(String groupId) async {
     try {
-      final response = await _client
-          .from('schedules')
-          .select()
-          .eq('groupId', groupId);
+      final response = await _client.rpc(
+        'api_get_schedule',
+        params: {'p_group_id': groupId},
+      );
 
       return (response as List)
           .map<ScheduleModel>((e) => ScheduleModel.fromJson(e))

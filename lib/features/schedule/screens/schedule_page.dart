@@ -1,9 +1,7 @@
 import 'package:animate_do/animate_do.dart';
-import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'dart:ui' as ui;
-import 'package:gymnastics_club/core/utils/extensions/size_extensions.dart';
+import 'package:gymnastics_club/core/theme/app_colors.dart';
 import 'package:gymnastics_club/features/profile/profile_controller/child_riverpod.dart';
 import 'package:gymnastics_club/features/schedule/schedule_controller/schedule_riverpod.dart';
 
@@ -35,181 +33,181 @@ class _SchedulePageState extends ConsumerState<SchedulePage> {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final cardColor = Theme.of(context).cardColor;
-    final shadowColor = isDark
-        ? Colors.black.withOpacity(0.3)
-        : Colors.black.withOpacity(0.05);
+    final cardColor = isDark ? const Color(0xFF1E1E1E) : Colors.white;
 
     ref.listen(childRiverpod, (previous, next) {
       if (previous?.selectedChild?.id != next.selectedChild?.id) {
         _fetchData();
       }
     });
+
     final scheduleState = ref.watch(scheduleRiverpod);
-    final schedule = scheduleState.scheduleList;
+    final scheduleList = scheduleState.scheduleList;
+
     return Scaffold(
-      appBar: AppBar(title: MainText('جدول المواعيد'), centerTitle: true),
       body: RefreshIndicator(
         onRefresh: () async {
           _fetchData();
         },
-        child: scheduleState.isLoading
-            ? MainShimmer.list(itemCount: 4, height: 120)
-            : SingleChildScrollView(
-                padding: const EdgeInsets.all(16),
-                physics: const AlwaysScrollableScrollPhysics(),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Container(
-                      padding: EdgeInsets.all(20),
-                      width: double.infinity,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(16),
-                        color: cardColor,
-                        boxShadow: [
-                          BoxShadow(
-                            color: shadowColor,
-                            offset: Offset(0, 2),
-                            blurRadius: 4,
-                          ),
-                        ],
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Transform.flip(
-                            flipX:
-                                Directionality.of(context) ==
-                                ui.TextDirection.rtl,
-                            child: Icon(Icons.arrow_left_outlined, size: 40),
-                          ),
-                          MainText(
-                            'الأسبوع الحالي'.tr(),
-                            fontSize: 22,
-                            fontWeight: FontWeight.w600,
-                          ),
-                          Transform.flip(
-                            flipX:
-                                Directionality.of(context) ==
-                                ui.TextDirection.rtl,
-                            child: Icon(Icons.arrow_right, size: 40),
-                          ),
-                        ],
-                      ),
+        child: CustomScrollView(
+          slivers: [
+            // 1. Curved Dark Navy Header
+            SliverToBoxAdapter(
+              child: Container(
+                height: 180,
+                width: double.infinity,
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [AppColors.primaryColor, AppColors.primaryDark],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: BorderRadius.only(
+                    bottomLeft: Radius.circular(40),
+                    bottomRight: Radius.circular(40),
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Color(0x33D32F2F),
+                      blurRadius: 20,
+                      offset: Offset(0, 10),
                     ),
-                    22.ph,
-                    if (schedule.isEmpty)
-                      const Center(
-                        child: Padding(
-                          padding: EdgeInsets.only(top: 50),
-                          child: MainText(
-                            'لا يوجد جدول مواعيد لهذه المجموعة حالياً',
-                          ),
-                        ),
-                      )
-                    else
-                      ListView.separated(
-                        itemCount: schedule.length,
-                        physics: const NeverScrollableScrollPhysics(),
-                        shrinkWrap: true,
-                        separatorBuilder: (context, index) => 16.ph,
-                        itemBuilder: (context, index) {
-                          final item = schedule[index];
-                          return FadeInUp(
-                            duration: const Duration(milliseconds: 600),
-                            delay: Duration(milliseconds: 100 * index),
-                            child: Container(
-                              width: double.infinity,
-                              decoration: BoxDecoration(
-                                color: cardColor,
-                                borderRadius: BorderRadius.circular(20),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: shadowColor,
-                                    offset: const Offset(0, 8),
-                                    blurRadius: 16,
-                                  ),
-                                ],
-                              ),
-                              child: Column(
-                                children: [
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 20,
-                                      vertical: 12,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: isDark
-                                          ? colorScheme.surfaceVariant
-                                          : const Color(0xFFF5F7FF),
-                                      borderRadius: BorderRadius.only(
-                                        topLeft: Radius.circular(20),
-                                        topRight: Radius.circular(20),
-                                      ),
-                                    ),
-                                    child: Row(
-                                      children: [
-                                        Icon(
-                                          Icons.calendar_today_rounded,
-                                          size: 18,
-                                          color: colorScheme.primary,
-                                        ),
-                                        10.pw,
-                                        MainText(
-                                          item.day.tr(),
-                                          fontSize: 18,
-                                          fontWeight: FontWeight.bold,
-                                          color: colorScheme.primary,
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                  Padding(
-                                    padding: const EdgeInsets.all(20),
-                                    child: _scheduleInfoTile(
-                                      icon: Icons.access_time_rounded,
-                                      title: 'الوقت',
-                                      value:
-                                          '${item.startTime} - ${item.endTime}',
-                                      color: Colors.orange.shade700,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          );
-                        },
-                      ),
                   ],
                 ),
+                child: SafeArea(
+                  child: Center(
+                    child: MainText(
+                      'جدول المواعيد',
+                      color: Colors.white,
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
               ),
+            ),
+
+            // 2. Week Selector / Info
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(20, 24, 20, 0),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  decoration: BoxDecoration(
+                    color: AppColors.accentColor.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: AppColors.accentColor.withOpacity(0.2)),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.calendar_today_outlined, color: AppColors.primaryColor, size: 20),
+                      const SizedBox(width: 12),
+                      MainText(
+                        'الأسبوع الحالي',
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.primaryColor,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+
+            // 3. Schedule List
+            if (scheduleState.isLoading)
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.all(20),
+                  child: MainShimmer.list(itemCount: 4, height: 100),
+                ),
+              )
+            else if (scheduleList.isEmpty)
+              const SliverFillRemaining(
+                child: Center(
+                  child: MainText('لا يوجد جدول مواعيد لهذه المجموعة حالياً'),
+                ),
+              )
+            else
+              SliverPadding(
+                padding: const EdgeInsets.all(20),
+                sliver: SliverList(
+                  delegate: SliverChildBuilderDelegate(
+                    (context, index) {
+                      final item = scheduleList[index];
+                      return FadeInUp(
+                        duration: const Duration(milliseconds: 600),
+                        delay: Duration(milliseconds: 100 * index),
+                        child: Padding(
+                          padding: const EdgeInsets.only(bottom: 16),
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: cardColor,
+                              borderRadius: BorderRadius.circular(24),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.04),
+                                  blurRadius: 10,
+                                  offset: const Offset(0, 4),
+                                ),
+                              ],
+                            ),
+                            child: Column(
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.all(16),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.primaryColor.withOpacity(0.05),
+                                    borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      const Icon(Icons.access_time_filled, color: AppColors.primaryColor, size: 22),
+                                      const SizedBox(width: 12),
+                                      MainText(
+                                        item.day,
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.bold,
+                                        color: AppColors.primaryColor,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                Padding(
+                                  padding: const EdgeInsets.all(20),
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      _buildTimeCard('البداية', item.startTime),
+                                      _buildTimeCard('النهاية', item.endTime),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      );
+                    },
+                    childCount: scheduleList.length,
+                  ),
+                ),
+              ),
+            const SliverToBoxAdapter(child: SizedBox(height: 80)),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _scheduleInfoTile({
-    required IconData icon,
-    required String title,
-    required String value,
-    required Color color,
-  }) {
-    final colorScheme = Theme.of(context).colorScheme;
-
+  Widget _buildTimeCard(String label, String time) {
     return Column(
       children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icon, size: 16, color: color),
-            6.pw,
-            MainText(title, fontSize: 13, color: colorScheme.onSurfaceVariant),
-          ],
-        ),
-        8.ph,
-        MainText(value, fontSize: 16, fontWeight: FontWeight.bold),
+        MainText(label, fontSize: 13, color: Colors.grey),
+        const SizedBox(height: 4),
+        MainText(time, fontSize: 17, fontWeight: FontWeight.bold),
       ],
     );
   }

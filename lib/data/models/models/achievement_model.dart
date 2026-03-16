@@ -23,11 +23,11 @@ class AchievementModel {
 
   factory AchievementModel.fromJson(Map<String, dynamic> json) {
     return AchievementModel(
-      id: json['id'],
-      childId: json['childId'],
+      id: (json['id'] as num).toInt(),
+      childId: json['childId'] != null ? (json['childId'] as num).toInt() : null,
       title: json['title'] ?? '',
       participantName: json['participantName'],
-      date: json['date'] != null ? DateTime.tryParse(json['date']) : null,
+      date: json['date'] != null ? DateTime.tryParse(json['date'].toString()) : null,
       venue: json['venue'],
       championType: json['champion_type'],
       imageUrl: json['image_url'],

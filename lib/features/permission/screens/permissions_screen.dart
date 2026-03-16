@@ -1,10 +1,9 @@
-import 'package:animate_do/animate_do.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:gymnastics_club/core/utils/extensions/size_extensions.dart';
 
 import '../../../core/routing/routes.dart';
+import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/enums.dart';
 import '../../../widgets/main_text.dart';
 import '../../../widgets/shimmer_widgets.dart';
@@ -19,19 +18,37 @@ class PermissionsScreen extends ConsumerStatefulWidget {
   ConsumerState<PermissionsScreen> createState() => _PermissionsScreenState();
 }
 
-class _PermissionsScreenState extends ConsumerState<PermissionsScreen> {
+class _PermissionsScreenState extends ConsumerState<PermissionsScreen>
+    with TickerProviderStateMixin {
   final ScrollController _scrollController = ScrollController();
   PermissionStatusEnum? _selectedFilter;
+
+  late AnimationController _headerAnimController;
+  late Animation<double> _headerFade;
+  late Animation<Offset> _headerSlide;
 
   @override
   void initState() {
     super.initState();
+    _headerAnimController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 600),
+    )..forward();
+    _headerFade =
+        CurvedAnimation(parent: _headerAnimController, curve: Curves.easeOut);
+    _headerSlide = Tween<Offset>(
+      begin: const Offset(0, -0.3),
+      end: Offset.zero,
+    ).animate(
+        CurvedAnimation(parent: _headerAnimController, curve: Curves.easeOut));
+
     Future.microtask(() async {
       final childName = ref.read(childRiverpod).selectedChild?.name;
       if (childName != null) {
-        ref
-            .read(permissionRiverpod.notifier)
-            .getPermissionList(childName: childName);
+        ref.read(permissionRiverpod.notifier).getPermissionList(
+              childName: childName,
+              status: _selectedFilter?.name,
+            );
       }
     });
     _scrollController.addListener(_onScroll);
@@ -39,6 +56,7 @@ class _PermissionsScreenState extends ConsumerState<PermissionsScreen> {
 
   @override
   void dispose() {
+    _headerAnimController.dispose();
     _scrollController.dispose();
     super.dispose();
   }
@@ -48,31 +66,103 @@ class _PermissionsScreenState extends ConsumerState<PermissionsScreen> {
         _scrollController.position.maxScrollExtent - 200) {
       final childName = ref.read(childRiverpod).selectedChild?.name;
       if (childName != null) {
-        ref
-            .read(permissionRiverpod.notifier)
-            .loadMorePermissions(childName: childName);
+        ref.read(permissionRiverpod.notifier).loadMorePermissions(
+              childName: childName,
+              status: _selectedFilter?.name,
+            );
       }
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
-      appBar: AppBar(title: MainText('الطلبات'), centerTitle: true),
+      backgroundColor:
+          isDark ? const Color(0xFF121212) : const Color(0xFFF5F6FA),
       body: Column(
         children: [
-          _buildFilterBar(),
+          // ── Curved Header ─────────────────────────────────────────────────
+          FadeTransition(
+            opacity: _headerFade,
+            child: SlideTransition(
+              position: _headerSlide,
+              child: Container(
+                width: double.infinity,
+                decoration: const BoxDecoration(
+                  color: AppColors.primaryColor,
+                  borderRadius: BorderRadius.only(
+                    bottomLeft: Radius.circular(40),
+                    bottomRight: Radius.circular(40),
+                  ),
+                ),
+                child: SafeArea(
+                  bottom: false,
+                  child: Column(
+                    children: [
+                      // Top row: back + title
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(8, 8, 8, 0),
+                        child: Row(
+                          children: [
+                            IconButton(
+                              icon: const Icon(Icons.arrow_back_rounded,
+                                  color: Colors.white),
+                              onPressed: () => context.pop(),
+                            ),
+                            const Expanded(
+                              child: MainText(
+                                'طلبات الغياب',
+                                color: Colors.white,
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                                textAlign: TextAlign.center,
+                              ),
+                            ),
+                            const SizedBox(width: 48),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      // Filter bar inside header
+                      SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        child: Row(
+                          children: [
+                            _filterChip('الكل', null, isDark),
+                            _filterChip('قيد الانتظار',
+                                PermissionStatusEnum.pending, isDark),
+                            _filterChip(
+                                'مقبول', PermissionStatusEnum.accepted, isDark),
+                            _filterChip(
+                                'مرفوض', PermissionStatusEnum.rejected, isDark),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
 
+          // ── List ──────────────────────────────────────────────────────────
           Expanded(
             child: RefreshIndicator(
+              color: AppColors.primaryColor,
               onRefresh: () async {
-                final childName = ref.read(childRiverpod).selectedChild?.name;
+                final childName =
+                    ref.read(childRiverpod).selectedChild?.name;
                 if (childName != null) {
                   await ref
                       .read(permissionRiverpod.notifier)
-                      .getPermissionList(childName: childName);
+                      .getPermissionList(
+                        childName: childName,
+                        status: _selectedFilter?.name,
+                      );
                 }
               },
               child: Consumer(
@@ -80,58 +170,75 @@ class _PermissionsScreenState extends ConsumerState<PermissionsScreen> {
                   final permissionState = ref.watch(permissionRiverpod);
 
                   if (permissionState.isLoading) {
-                    return MainShimmer.cardList();
-                  } else if (permissionState.error.isNotEmpty) {
-                    return Center(
-                      child: MainText(permissionState.error.toString()),
+                    return Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: MainShimmer.cardList(),
                     );
                   }
 
-                  final filteredList = _selectedFilter == null
-                      ? permissionState.permissionList
-                      : permissionState.permissionList
-                            .where((item) => item.status == _selectedFilter)
-                            .toList();
+                  if (permissionState.error.isNotEmpty) {
+                    return Center(
+                      child: MainText(
+                        permissionState.error,
+                        color: Colors.red,
+                      ),
+                    );
+                  }
 
-                  return AnimatedSwitcher(
-                    duration: const Duration(milliseconds: 400),
-                    child: filteredList.isEmpty
-                        ? ListView(
-                            children: const [
-                              SizedBox(height: 200),
-                              Center(
-                                key: ValueKey('empty'),
-                                child: MainText('لا توجد طلبات في هذا القسم'),
+                  final filteredList = permissionState.permissionList;
+
+                  if (filteredList.isEmpty) {
+                    return ListView(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      children: [
+                        SizedBox(height: MediaQuery.of(context).size.height * 0.2),
+                        Center(
+                          child: Column(
+                            children: [
+                              Icon(
+                                Icons.inbox_outlined,
+                                size: 72,
+                                color: Colors.grey[300],
+                              ),
+                              const SizedBox(height: 16),
+                              MainText(
+                                'لا توجد طلبات في هذا القسم',
+                                color: Colors.grey,
+                                fontSize: 16,
                               ),
                             ],
-                          )
-                        : ListView.separated(
-                            controller: _scrollController,
-                            physics: const AlwaysScrollableScrollPhysics(),
-                            key: ValueKey(_selectedFilter),
-                            padding: const EdgeInsets.all(16),
-                            itemCount:
-                                filteredList.length +
-                                (permissionState.isLoadingMore ? 1 : 0),
-                            separatorBuilder: (context, index) => 12.ph,
-                            itemBuilder: (context, index) {
-                              if (index == filteredList.length) {
-                                return MainShimmer.single(height: 120);
-                              }
-                              final item = filteredList[index];
-                              return FadeInUp(
-                                duration: const Duration(milliseconds: 300),
-                                delay: Duration(milliseconds: 50 * index),
-                                child: RequestWidget(
-                                  permissionModel: item,
-                                  isLoading:
-                                      permissionState.changeStatusLoading &&
-                                      permissionState.permissionStatusId ==
-                                          item.id,
-                                ),
-                              );
-                            },
                           ),
+                        ),
+                      ],
+                    );
+                  }
+
+                  return ListView.builder(
+                    controller: _scrollController,
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    padding: const EdgeInsets.fromLTRB(16, 20, 16, 100),
+                    itemCount: filteredList.length +
+                        (permissionState.isLoadingMore ? 1 : 0),
+                    itemBuilder: (context, index) {
+                      if (index == filteredList.length) {
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          child: MainShimmer.single(height: 120),
+                        );
+                      }
+                      final item = filteredList[index];
+                      return _AnimatedCard(
+                        index: index,
+                        child: Padding(
+                          padding: const EdgeInsets.only(bottom: 14),
+                          child: RequestWidget(
+                            permissionModel: item,
+                            isLoading: permissionState.changeStatusLoading &&
+                                permissionState.permissionStatusId == item.id,
+                          ),
+                        ),
+                      );
+                    },
                   );
                 },
               ),
@@ -139,89 +246,115 @@ class _PermissionsScreenState extends ConsumerState<PermissionsScreen> {
           ),
         ],
       ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
-      floatingActionButton: Container(
-        width: 56,
-        height: 56,
-        decoration: BoxDecoration(
-          color: colorScheme.primary,
-          shape: BoxShape.circle,
-          boxShadow: [
-            BoxShadow(
-              color: colorScheme.primary.withOpacity(0.4),
-              blurRadius: 12,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
-        child: IconButton(
-          icon: const Icon(Icons.add, color: Colors.white, size: 24),
-          onPressed: () {
-            context.push(Routes.requestPermission);
-          },
-        ),
+
+      // ── Floating Action Button ────────────────────────────────────────────
+      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
+      floatingActionButton: FloatingActionButton.extended(
+        backgroundColor: AppColors.primaryColor,
+        foregroundColor: Colors.white,
+        icon: const Icon(Icons.add_rounded),
+        label: const Text('طلب جديد'),
+        onPressed: () => context.push(Routes.requestPermission),
       ),
     );
   }
 
-  Widget _buildFilterBar() {
-    return Container(
-      height: 60,
-      width: double.infinity,
-      child: SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        child: Row(
-          children: [
-            _smoothFilterButton('الكل', null),
-            _smoothFilterButton('قيد الانتظار', PermissionStatusEnum.pending),
-            _smoothFilterButton('مقبول', PermissionStatusEnum.accepted),
-            _smoothFilterButton('مرفوض', PermissionStatusEnum.rejected),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _smoothFilterButton(String label, PermissionStatusEnum? status) {
+  Widget _filterChip(
+      String label, PermissionStatusEnum? status, bool isDark) {
     final isSelected = _selectedFilter == status;
-    final colorScheme = Theme.of(context).colorScheme;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
     return GestureDetector(
-      onTap: () => setState(() => _selectedFilter = status),
+      onTap: () {
+        if (_selectedFilter == status) return;
+        setState(() => _selectedFilter = status);
+        
+        final childName = ref.read(childRiverpod).selectedChild?.name;
+        if (childName != null) {
+          ref.read(permissionRiverpod.notifier).getPermissionList(
+                childName: childName,
+                status: status?.name,
+              );
+        }
+      },
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 300),
+        duration: const Duration(milliseconds: 250),
         curve: Curves.easeInOut,
-        margin: const EdgeInsets.only(left: 8),
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+        margin: const EdgeInsets.only(left: 8, bottom: 4),
+        padding:
+            const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
         decoration: BoxDecoration(
-          color: isSelected
-              ? colorScheme.primary
-              : colorScheme.surfaceVariant.withOpacity(isDark ? 0.4 : 1),
+          color: isSelected ? Colors.white : Colors.white.withOpacity(0.2),
           borderRadius: BorderRadius.circular(25),
           boxShadow: isSelected
               ? [
                   BoxShadow(
-                    color: colorScheme.primary.withOpacity(0.3),
+                    color: Colors.black.withOpacity(0.15),
                     blurRadius: 8,
-                    offset: const Offset(0, 4),
-                  ),
+                    offset: const Offset(0, 3),
+                  )
                 ]
               : [],
         ),
-        child: Center(
-          child: AnimatedDefaultTextStyle(
-            duration: const Duration(milliseconds: 300),
-            style: TextStyle(
-              color: isSelected ? colorScheme.onPrimary : colorScheme.onSurface,
-              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-              fontSize: 14,
-            ),
-            child: Text(label),
-          ),
+        child: MainText(
+          label,
+          fontSize: 13,
+          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+          color: isSelected ? AppColors.primaryColor : Colors.white,
         ),
       ),
+    );
+  }
+}
+
+// ── Staggered animation wrapper ──────────────────────────────────────────────
+
+class _AnimatedCard extends StatefulWidget {
+  final Widget child;
+  final int index;
+
+  const _AnimatedCard({required this.child, required this.index});
+
+  @override
+  State<_AnimatedCard> createState() => _AnimatedCardState();
+}
+
+class _AnimatedCardState extends State<_AnimatedCard>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _ctrl;
+  late Animation<double> _opacity;
+  late Animation<Offset> _slide;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 450),
+    );
+    _opacity = CurvedAnimation(parent: _ctrl, curve: Curves.easeOut);
+    _slide = Tween<Offset>(
+      begin: const Offset(0, 0.15),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeOut));
+
+    Future.delayed(
+      Duration(milliseconds: 70 * (widget.index.clamp(0, 6))),
+      () {
+        if (mounted) _ctrl.forward();
+      },
+    );
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FadeTransition(
+      opacity: _opacity,
+      child: SlideTransition(position: _slide, child: widget.child),
     );
   }
 }
