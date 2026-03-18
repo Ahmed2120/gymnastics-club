@@ -12,6 +12,7 @@ import 'package:gymnastics_club/widgets/main_textfield.dart';
 import '../../../widgets/custom_button.dart';
 import '../../../widgets/main_text.dart';
 import '../../../widgets/select_date.dart';
+import '../../../widgets/custom_back_button.dart';
 
 class RequestPermission extends ConsumerStatefulWidget {
   const RequestPermission({super.key});
@@ -34,10 +35,10 @@ class _RequestPermissionState extends ConsumerState<RequestPermission>
     super.initState();
     _animCtrl = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 500),
+      duration: const Duration(milliseconds: 600),
     )..forward();
     _fadeAnim =
-        CurvedAnimation(parent: _animCtrl, curve: Curves.easeOut);
+        CurvedAnimation(parent: _animCtrl, curve: Curves.easeOutCubic);
   }
 
   @override
@@ -54,103 +55,75 @@ class _RequestPermissionState extends ConsumerState<RequestPermission>
     final activeChild = ref.watch(childRiverpod).selectedChild;
 
     return Scaffold(
-      backgroundColor:
-          isDark ? const Color(0xFF121212) : const Color(0xFFF5F6FA),
+      backgroundColor: isDark ? AppColors.darkBackground : const Color(0xFFF5F6FA),
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        centerTitle: true,
+        leading: const CustomBackButton(),
+        title: MainText(
+          'طلب إذن غياب جديد',
+          fontSize: 28,
+          fontWeight: FontWeight.bold,
+          color: isDark ? Colors.white : AppColors.lightText,
+        ),
+      ),
       body: Column(
         children: [
-          // ── Curved Header ────────────────────────────────────────────────
-          Container(
-            width: double.infinity,
-            decoration: const BoxDecoration(
-              color: AppColors.primaryColor,
-              borderRadius: BorderRadius.only(
-                bottomLeft: Radius.circular(40),
-                bottomRight: Radius.circular(40),
-              ),
-            ),
-            child: SafeArea(
-              bottom: false,
-              child: Column(
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 8),
-                    child: Row(
-                      children: [
-                        IconButton(
-                          icon: const Icon(Icons.arrow_back_rounded,
-                              color: Colors.white),
-                          onPressed: () => context.pop(),
-                        ),
-                        const Expanded(
-                          child: MainText(
-                            'طلب إذن غياب جديد',
-                            color: Colors.white,
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                            textAlign: TextAlign.center,
-                          ),
-                        ),
-                        const SizedBox(width: 48), // balance
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                ],
-              ),
-            ),
-          ),
-
-          // ── Form ─────────────────────────────────────────────────────────
           Expanded(
             child: FadeTransition(
               opacity: _fadeAnim,
               child: Form(
                 key: _formKey,
                 child: ListView(
-                  padding: const EdgeInsets.fromLTRB(20, 28, 20, 20),
+                  physics: const BouncingScrollPhysics(),
+                  padding: const EdgeInsets.fromLTRB(24, 32, 24, 40),
                   children: [
-                    // Child name info chip
                     if (activeChild != null)
                       Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 16, vertical: 12),
+                        padding: const EdgeInsets.all(24),
                         decoration: BoxDecoration(
-                          color: isDark
-                              ? const Color(0xFF1E1E1E)
-                              : Colors.white,
-                          borderRadius: BorderRadius.circular(16),
+                          color: isDark ? AppColors.darkSurface : Colors.white,
+                          borderRadius: BorderRadius.circular(32),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withOpacity(0.05),
-                              blurRadius: 10,
-                              offset: const Offset(0, 4),
+                              color: Colors.black.withOpacity(isDark ? 0.3 : 0.05),
+                              blurRadius: 15,
+                              offset: const Offset(0, 8),
                             ),
                           ],
+                          border: Border.all(
+                            color: isDark ? Colors.white.withOpacity(0.05) : Colors.grey.withOpacity(0.05),
+                            width: 1.5,
+                          ),
                         ),
                         child: Row(
                           children: [
                             Container(
-                              padding: const EdgeInsets.all(8),
+                              padding: const EdgeInsets.all(12),
                               decoration: BoxDecoration(
-                                color: AppColors.primaryColor.withOpacity(0.1),
-                                borderRadius: BorderRadius.circular(10),
+                                color: AppColors.primaryCrimson.withOpacity(0.12),
+                                borderRadius: BorderRadius.circular(14),
                               ),
-                              child: const Icon(Icons.child_care_rounded,
-                                  color: AppColors.primaryColor, size: 20),
+                              child: const Icon(Icons.person_rounded,
+                                  color: AppColors.primaryCrimson, size: 28),
                             ),
-                            const SizedBox(width: 12),
+                            const SizedBox(width: 20),
                             Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 MainText(
                                   'اسم اللاعب',
-                                  fontSize: 11,
-                                  color: Colors.grey,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w700,
+                                  color: isDark ? Colors.white38 : Colors.grey,
                                 ),
+                                const SizedBox(height: 4),
                                 MainText(
                                   activeChild.name,
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.bold,
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w900,
+                                  color: isDark ? Colors.white : Colors.black87,
                                 ),
                               ],
                             ),
@@ -158,28 +131,29 @@ class _RequestPermissionState extends ConsumerState<RequestPermission>
                         ),
                       ),
 
-                    28.ph,
+                    40.ph,
 
-                    // Section label: Date
                     _SectionLabel(
                         icon: Icons.calendar_today_rounded,
-                        label: 'تاريخ الغياب'),
-                    12.ph,
+                        label: 'تاريخ الغياب',
+                        isDark: isDark),
+                    16.ph,
                     SelectDateWidget(
                       onSelect: (date) =>
                           setState(() => _selectedDate = date),
                     ),
 
-                    28.ph,
+                    40.ph,
 
-                    // Section label: Reason
                     _SectionLabel(
-                        icon: Icons.notes_rounded, label: 'سبب الغياب'),
-                    12.ph,
+                        icon: Icons.edit_note_rounded, 
+                        label: 'سبب الغياب',
+                        isDark: isDark),
+                    16.ph,
                     MainTextField(
                       controller: _reasonController,
-                      maxLines: 4,
-                      hint: 'اكتب السبب هنا...',
+                      maxLines: 5,
+                      hint: 'اكتب السبب هنا بالتفصيل...',
                       validator: (value) {
                         if (value == null || value.isEmpty) {
                           return 'يرجى كتابة سبب الغياب';
@@ -188,19 +162,22 @@ class _RequestPermissionState extends ConsumerState<RequestPermission>
                       },
                     ),
 
-                    32.ph,
+                    48.ph,
 
-                    // Submit button
                     PrimaryButton(
-                      text: 'إرسال الطلب',
+                      text: 'إرسال الطلب الآن',
                       isLoading: permissionState.isLoading,
-                      borderRadius: 16,
+                      borderRadius: 24,
                       onPressed: () async {
                         if (!_formKey.currentState!.validate()) return;
                         if (_selectedDate == null) {
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                                content: Text('يرجى اختيار التاريخ')),
+                            SnackBar(
+                                content: const MainText('يرجى اختيار التاريخ', color: Colors.white, fontSize: 14),
+                                backgroundColor: AppColors.primaryCrimson,
+                                behavior: SnackBarBehavior.floating,
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            ),
                           );
                           return;
                         }
@@ -219,9 +196,11 @@ class _RequestPermissionState extends ConsumerState<RequestPermission>
                               .submitRequest(newRequest);
                           if (context.mounted) {
                             ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('تم إرسال الطلب بنجاح'),
-                                backgroundColor: Colors.green,
+                              SnackBar(
+                                content: const MainText('تم إرسال الطلب بنجاح', color: Colors.white, fontSize: 14),
+                                backgroundColor: Colors.green.shade600,
+                                behavior: SnackBarBehavior.floating,
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                               ),
                             );
                             context.pop();
@@ -229,12 +208,18 @@ class _RequestPermissionState extends ConsumerState<RequestPermission>
                         } catch (e) {
                           if (context.mounted) {
                             ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text('حدث خطأ: $e')),
+                              SnackBar(
+                                content: MainText('حدث خطأ: $e', color: Colors.white, fontSize: 14),
+                                backgroundColor: Colors.red.shade600,
+                                behavior: SnackBarBehavior.floating,
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                              ),
                             );
                           }
                         }
                       },
                     ),
+                    40.ph,
                   ],
                 ),
               ),
@@ -246,24 +231,31 @@ class _RequestPermissionState extends ConsumerState<RequestPermission>
   }
 }
 
-// ── Section Label Helper ─────────────────────────────────────────────────────
-
 class _SectionLabel extends StatelessWidget {
   final IconData icon;
   final String label;
+  final bool isDark;
 
-  const _SectionLabel({required this.icon, required this.label});
+  const _SectionLabel({required this.icon, required this.label, required this.isDark});
 
   @override
   Widget build(BuildContext context) {
     return Row(
       children: [
-        Icon(icon, size: 18, color: AppColors.primaryColor),
-        const SizedBox(width: 8),
+        Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: AppColors.primaryCrimson.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Icon(icon, size: 18, color: AppColors.primaryCrimson),
+        ),
+        const SizedBox(width: 14),
         MainText(
           label,
-          fontSize: 16,
-          fontWeight: FontWeight.bold,
+          fontSize: 18,
+          fontWeight: FontWeight.w900,
+          color: isDark ? Colors.white : Colors.black87,
         ),
       ],
     );

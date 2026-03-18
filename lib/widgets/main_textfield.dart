@@ -1,6 +1,7 @@
 // import 'package:country_code_picker/country_code_picker.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import '../core/theme/app_colors.dart';
 
 class MainTextField extends StatefulWidget {
   final String? hint;
@@ -108,10 +109,10 @@ class _MainTextFieldState extends State<MainTextField> {
     _obscureText = widget.isPassword;
   }
 
-  InputBorder _buildBorder({Color? color}) {
-    final radius = widget.borderRadius ?? 8.0;
-    final width = widget.borderWidth ?? 1.0;
-    final borderColor = color ?? widget.borderColor ?? Colors.grey.shade300;
+  InputBorder _buildBorder({Color? color, required bool isDark}) {
+    final radius = widget.borderRadius ?? 14.0;
+    final width = widget.borderWidth ?? 1.5;
+    final borderColor = color ?? widget.borderColor ?? (isDark ? Colors.white12 : AppColors.borderGrey);
 
     return OutlineInputBorder(
       borderRadius: BorderRadius.circular(radius),
@@ -135,9 +136,10 @@ class _MainTextFieldState extends State<MainTextField> {
             padding: const EdgeInsets.only(bottom: 8),
             child: Text(
               widget.label!,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
+                color: isDark ? Colors.white70 : const Color(0xFF212121),
               ),
             ),
           ),
@@ -148,9 +150,10 @@ class _MainTextFieldState extends State<MainTextField> {
           controller: widget.controller,
           focusNode: widget.currentFocusNode,
           style: widget.textStyle ??
-              const TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
+               TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w400,
+                color: isDark ? Colors.white : Colors.black87,
               ),
           keyboardType: widget.keyboardType,
           textInputAction: widget.textInputAction,
@@ -170,7 +173,7 @@ class _MainTextFieldState extends State<MainTextField> {
           },
           decoration: InputDecoration(
             filled: true,
-            fillColor: widget.filledColor ?? (isDark ? Colors.grey.shade900 : Colors.white),
+            fillColor: widget.filledColor ?? (isDark ? AppColors.darkItem : const Color(0xFFF5F5F5)),
             label: widget.label != null
                 ? Text(
               widget.label!,
@@ -181,7 +184,7 @@ class _MainTextFieldState extends State<MainTextField> {
             prefixIconConstraints: widget.prefixIconConstraints,
             isDense: widget.isDense,
             contentPadding: widget.contentPadding ??
-                const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
+                const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
             prefixIcon: widget.prefixIcon != null
                 ? Padding(
               padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -197,28 +200,29 @@ class _MainTextFieldState extends State<MainTextField> {
                     ? CupertinoIcons.eye_slash
                     : CupertinoIcons.eye,
                 size: 20,
+                color: isDark ? Colors.white38 : Colors.grey,
               ),
             )
                 : widget.suffixIcon,
             suffix: widget.suffix,
             hintText: widget.hint,
-            hintStyle: const TextStyle(
-              fontSize: 13,
-              color: Colors.grey,
+            hintStyle: TextStyle(
+              fontSize: 14,
+              color: isDark ? Colors.white38 : AppColors.hintColor,
               fontWeight: FontWeight.w400,
             ),
             counterText: '',
             // Border configurations
-            border: widget.border ?? _buildBorder(),
-            enabledBorder: widget.enabledBorder ?? _buildBorder(),
+            border: widget.border ?? _buildBorder(isDark: isDark),
+            enabledBorder: widget.enabledBorder ?? _buildBorder(isDark: isDark),
             focusedBorder: widget.focusedBorder ??
-                _buildBorder(color: widget.focusedBorderColor ?? Theme.of(context).primaryColor),
+                _buildBorder(isDark: isDark, color: widget.focusedBorderColor ?? AppColors.primaryCrimson),
             errorBorder: widget.errorBorder ??
-                _buildBorder(color: widget.errorBorderColor ?? Colors.red),
+                _buildBorder(isDark: isDark, color: widget.errorBorderColor ?? Colors.red),
             focusedErrorBorder: widget.focusedErrorBorder ??
-                _buildBorder(color: widget.errorBorderColor ?? Colors.red),
+                _buildBorder(isDark: isDark, color: widget.errorBorderColor ?? Colors.red),
             disabledBorder: widget.disabledBorder ??
-                _buildBorder(color: Colors.grey.shade200),
+                _buildBorder(isDark: isDark, color: isDark ? Colors.white12 : Colors.grey.shade200),
           ),
         ),
       ],

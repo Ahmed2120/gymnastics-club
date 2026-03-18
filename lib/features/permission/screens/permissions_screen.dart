@@ -10,6 +10,7 @@ import '../../../widgets/shimmer_widgets.dart';
 import '../../profile/profile_controller/child_riverpod.dart';
 import '../permission_controller/permission_riverpod.dart';
 import 'components/request_widget.dart';
+import '../../../widgets/custom_back_button.dart';
 
 class PermissionsScreen extends ConsumerStatefulWidget {
   const PermissionsScreen({super.key});
@@ -79,69 +80,41 @@ class _PermissionsScreenState extends ConsumerState<PermissionsScreen>
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
-      backgroundColor:
-          isDark ? const Color(0xFF121212) : const Color(0xFFF5F6FA),
+      backgroundColor: isDark ? AppColors.darkBackground : const Color(0xFFF5F6FA),
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        centerTitle: true,
+        leading: const CustomBackButton(),
+        title: MainText(
+          'طلبات الغياب',
+          fontSize: 28,
+          fontWeight: FontWeight.bold,
+          color: isDark ? Colors.white : AppColors.lightText,
+        ),
+      ),
       body: Column(
         children: [
-          // ── Curved Header ─────────────────────────────────────────────────
           FadeTransition(
             opacity: _headerFade,
             child: SlideTransition(
               position: _headerSlide,
-              child: Container(
-                width: double.infinity,
-                decoration: const BoxDecoration(
-                  color: AppColors.primaryColor,
-                  borderRadius: BorderRadius.only(
-                    bottomLeft: Radius.circular(40),
-                    bottomRight: Radius.circular(40),
-                  ),
-                ),
-                child: SafeArea(
-                  bottom: false,
-                  child: Column(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  clipBehavior: Clip.none,
+                  physics: const BouncingScrollPhysics(),
+                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  child: Row(
                     children: [
-                      // Top row: back + title
-                      Padding(
-                        padding: const EdgeInsets.fromLTRB(8, 8, 8, 0),
-                        child: Row(
-                          children: [
-                            IconButton(
-                              icon: const Icon(Icons.arrow_back_rounded,
-                                  color: Colors.white),
-                              onPressed: () => context.pop(),
-                            ),
-                            const Expanded(
-                              child: MainText(
-                                'طلبات الغياب',
-                                color: Colors.white,
-                                fontSize: 20,
-                                fontWeight: FontWeight.bold,
-                                textAlign: TextAlign.center,
-                              ),
-                            ),
-                            const SizedBox(width: 48),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      // Filter bar inside header
-                      SingleChildScrollView(
-                        scrollDirection: Axis.horizontal,
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        child: Row(
-                          children: [
-                            _filterChip('الكل', null, isDark),
-                            _filterChip('قيد الانتظار',
-                                PermissionStatusEnum.pending, isDark),
-                            _filterChip(
-                                'مقبول', PermissionStatusEnum.accepted, isDark),
-                            _filterChip(
-                                'مرفوض', PermissionStatusEnum.rejected, isDark),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 16),
+                      _filterChip('الكل', null, isDark),
+                      _filterChip('قيد الانتظار',
+                          PermissionStatusEnum.pending, isDark),
+                      _filterChip(
+                          'مقبول', PermissionStatusEnum.accepted, isDark),
+                      _filterChip(
+                          'مرفوض', PermissionStatusEnum.rejected, isDark),
                     ],
                   ),
                 ),
@@ -149,10 +122,9 @@ class _PermissionsScreenState extends ConsumerState<PermissionsScreen>
             ),
           ),
 
-          // ── List ──────────────────────────────────────────────────────────
           Expanded(
             child: RefreshIndicator(
-              color: AppColors.primaryColor,
+              color: AppColors.primaryCrimson,
               onRefresh: () async {
                 final childName =
                     ref.read(childRiverpod).selectedChild?.name;
@@ -171,7 +143,7 @@ class _PermissionsScreenState extends ConsumerState<PermissionsScreen>
 
                   if (permissionState.isLoading) {
                     return Padding(
-                      padding: const EdgeInsets.all(16),
+                      padding: const EdgeInsets.all(24),
                       child: MainShimmer.cardList(),
                     );
                   }
@@ -180,7 +152,8 @@ class _PermissionsScreenState extends ConsumerState<PermissionsScreen>
                     return Center(
                       child: MainText(
                         permissionState.error,
-                        color: Colors.red,
+                        color: AppColors.primaryCrimson,
+                        fontWeight: FontWeight.bold,
                       ),
                     );
                   }
@@ -197,14 +170,15 @@ class _PermissionsScreenState extends ConsumerState<PermissionsScreen>
                             children: [
                               Icon(
                                 Icons.inbox_outlined,
-                                size: 72,
-                                color: Colors.grey[300],
+                                size: 80,
+                                color: isDark ? Colors.white.withOpacity(0.05) : Colors.grey[200],
                               ),
-                              const SizedBox(height: 16),
+                              const SizedBox(height: 24),
                               MainText(
                                 'لا توجد طلبات في هذا القسم',
-                                color: Colors.grey,
+                                color: isDark ? Colors.white24 : Colors.grey,
                                 fontSize: 16,
+                                fontWeight: FontWeight.w700,
                               ),
                             ],
                           ),
@@ -215,14 +189,14 @@ class _PermissionsScreenState extends ConsumerState<PermissionsScreen>
 
                   return ListView.builder(
                     controller: _scrollController,
-                    physics: const AlwaysScrollableScrollPhysics(),
-                    padding: const EdgeInsets.fromLTRB(16, 20, 16, 100),
+                    physics: const BouncingScrollPhysics(),
+                    padding: const EdgeInsets.fromLTRB(24, 32, 24, 120),
                     itemCount: filteredList.length +
                         (permissionState.isLoadingMore ? 1 : 0),
                     itemBuilder: (context, index) {
                       if (index == filteredList.length) {
                         return Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          padding: const EdgeInsets.symmetric(vertical: 24),
                           child: MainShimmer.single(height: 120),
                         );
                       }
@@ -230,7 +204,7 @@ class _PermissionsScreenState extends ConsumerState<PermissionsScreen>
                       return _AnimatedCard(
                         index: index,
                         child: Padding(
-                          padding: const EdgeInsets.only(bottom: 14),
+                          padding: const EdgeInsets.only(bottom: 16),
                           child: RequestWidget(
                             permissionModel: item,
                             isLoading: permissionState.changeStatusLoading &&
@@ -247,14 +221,18 @@ class _PermissionsScreenState extends ConsumerState<PermissionsScreen>
         ],
       ),
 
-      // ── Floating Action Button ────────────────────────────────────────────
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
-      floatingActionButton: FloatingActionButton.extended(
-        backgroundColor: AppColors.primaryColor,
-        foregroundColor: Colors.white,
-        icon: const Icon(Icons.add_rounded),
-        label: const Text('طلب جديد'),
-        onPressed: () => context.push(Routes.requestPermission),
+      floatingActionButton: Padding(
+        padding: const EdgeInsets.only(bottom: 16, right: 8),
+        child: FloatingActionButton.extended(
+          backgroundColor: AppColors.primaryCrimson,
+          foregroundColor: Colors.white,
+          elevation: 12,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          icon: const Icon(Icons.add_rounded, size: 28),
+          label: const MainText('طلب جديد', color: Colors.white, fontSize: 16, fontWeight: FontWeight.w900),
+          onPressed: () => context.push(Routes.requestPermission),
+        ),
       ),
     );
   }
@@ -276,36 +254,40 @@ class _PermissionsScreenState extends ConsumerState<PermissionsScreen>
         }
       },
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 250),
-        curve: Curves.easeInOut,
-        margin: const EdgeInsets.only(left: 8, bottom: 4),
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeOutCubic,
+        margin: const EdgeInsets.only(left: 12, bottom: 4),
         padding:
-            const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
+            const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
         decoration: BoxDecoration(
-          color: isSelected ? Colors.white : Colors.white.withOpacity(0.2),
-          borderRadius: BorderRadius.circular(25),
+          color: isSelected 
+              ? AppColors.primaryCrimson 
+              : (isDark ? AppColors.darkSurface : Colors.white),
+          borderRadius: BorderRadius.circular(30),
+          border: Border.all(
+             color: isSelected ? Colors.transparent : (isDark ? Colors.white.withOpacity(0.05) : const Color(0xFFE5E5E5)),
+             width: 1.5,
+          ),
           boxShadow: isSelected
               ? [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.15),
-                    blurRadius: 8,
-                    offset: const Offset(0, 3),
+                    color: AppColors.primaryCrimson.withOpacity(0.35),
+                    blurRadius: 12,
+                    offset: const Offset(0, 6),
                   )
                 ]
               : [],
         ),
         child: MainText(
           label,
-          fontSize: 13,
-          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-          color: isSelected ? AppColors.primaryColor : Colors.white,
+          fontSize: 14,
+          fontWeight: isSelected ? FontWeight.w900 : FontWeight.w700,
+          color: isSelected ? Colors.white : (isDark ? Colors.white70 : Colors.black87),
         ),
       ),
     );
   }
 }
-
-// ── Staggered animation wrapper ──────────────────────────────────────────────
 
 class _AnimatedCard extends StatefulWidget {
   final Widget child;
@@ -328,16 +310,16 @@ class _AnimatedCardState extends State<_AnimatedCard>
     super.initState();
     _ctrl = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 450),
+      duration: const Duration(milliseconds: 500),
     );
     _opacity = CurvedAnimation(parent: _ctrl, curve: Curves.easeOut);
     _slide = Tween<Offset>(
-      begin: const Offset(0, 0.15),
+      begin: const Offset(0, 0.2),
       end: Offset.zero,
-    ).animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeOut));
+    ).animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeOutCubic));
 
     Future.delayed(
-      Duration(milliseconds: 70 * (widget.index.clamp(0, 6))),
+      Duration(milliseconds: 70 * (widget.index.clamp(0, 10))),
       () {
         if (mounted) _ctrl.forward();
       },

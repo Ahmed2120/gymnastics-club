@@ -1,14 +1,18 @@
+import 'dart:math';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gymnastics_club/core/theme/app_colors.dart';
 import 'package:gymnastics_club/features/achievement/achievement_controller/achievement_riverpod.dart';
 import 'package:gymnastics_club/features/profile/profile_controller/child_riverpod.dart';
+import 'package:intl/intl.dart';
 
 import '../../../data/models/models/achievement_model.dart';
 import '../../../widgets/main_text.dart';
 import '../../../widgets/shimmer_widgets.dart';
+import '../widgets/achievement_stats_hud.dart';
+import '../widgets/pulsing_avatar.dart';
+import '../../../widgets/custom_app_bar_button.dart';
 
 class AchievementPage extends ConsumerStatefulWidget {
   const AchievementPage({super.key});
@@ -23,8 +27,6 @@ class _AchievementPageState extends ConsumerState<AchievementPage>
   late AnimationController _headerAnimController;
   late Animation<double> _headerFade;
   late Animation<Offset> _headerSlide;
-  late AnimationController _pulseController;
-  late Animation<double> _pulseScale;
 
   @override
   void initState() {
@@ -33,10 +35,6 @@ class _AchievementPageState extends ConsumerState<AchievementPage>
       vsync: this,
       duration: const Duration(milliseconds: 600),
     );
-    _pulseController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 2000),
-    )..repeat(reverse: true);
 
     _headerFade = CurvedAnimation(
       parent: _headerAnimController,
@@ -49,9 +47,6 @@ class _AchievementPageState extends ConsumerState<AchievementPage>
       parent: _headerAnimController,
       curve: Curves.easeOut,
     ));
-    _pulseScale = Tween<double>(begin: 1.0, end: 1.15).animate(
-      CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
-    );
 
     _headerAnimController.forward();
     _fetchData();
@@ -61,7 +56,6 @@ class _AchievementPageState extends ConsumerState<AchievementPage>
   @override
   void dispose() {
     _headerAnimController.dispose();
-    _pulseController.dispose();
     _scrollController.dispose();
     super.dispose();
   }
@@ -99,282 +93,161 @@ class _AchievementPageState extends ConsumerState<AchievementPage>
     final achievements = achievementState.achievementList;
 
     return Scaffold(
+      backgroundColor: isDark ? AppColors.darkBackground : const Color(0xFFF5F6FA),
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        centerTitle: true,
+        automaticallyImplyLeading: false,
+        title: MainText(
+          "إنجازات البطل",
+          fontSize: 28,
+          fontWeight: FontWeight.bold,
+          color: isDark ? Colors.white : AppColors.lightText,
+        ),
+      ),
       body: Stack(
         children: [
           const SparkleEffect(),
           RefreshIndicator(
-            color: AppColors.primaryColor,
+            color: AppColors.primaryCrimson,
             onRefresh: () async => _fetchData(),
-        child: CustomScrollView(
-          controller: _scrollController,
-          physics: const AlwaysScrollableScrollPhysics(),
-          slivers: [
-            // 1. Hero HUD Header
-            SliverToBoxAdapter(
-              child: FadeTransition(
-                opacity: _headerFade,
-                child: SlideTransition(
-                  position: _headerSlide,
-                  child: Container(
-                    width: double.infinity,
-                    decoration: const BoxDecoration(
-                      color: AppColors.primaryColor,
-                      borderRadius: BorderRadius.only(
-                        bottomLeft: Radius.circular(40),
-                        bottomRight: Radius.circular(40),
-                      ),
-                    ),
-                    child: Stack(
-                      children: [
-                        // Decorative Glass Element
-                        Positioned(
-                          top: -60,
-                          left: -60,
-                          child: Container(
-                            width: 200,
-                            height: 200,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: Colors.white.withOpacity(0.05),
-                            ),
-                          ),
-                        ),
-                        SafeArea(
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 30),
-                            child: Column(
-                              children: [
-                                // Child Profile Section
-                                Consumer(
-                                  builder: (context, ref, child) {
-                                    final selectedChild = ref.watch(childRiverpod).selectedChild;
-                                    final xp = (_getCount(achievements, 'gold') * 10) + (_getCount(achievements, 'silver') * 5) + (_getCount(achievements, 'bronze') * 2);
-                                    
-                                    String rank;
-                                    if (xp >= 70) {
-                                      rank = 'بطل النخبة 💎';
-                                    } else if (xp >= 30) {
-                                      rank = 'محترف جمباز 🏆';
-                                    } else {
-                                      rank = 'نجم صاعد ✨';
-                                    }
+            child: CustomScrollView(
+              controller: _scrollController,
+              physics: const AlwaysScrollableScrollPhysics(),
+              slivers: [
+                SliverToBoxAdapter(
+                  child: FadeTransition(
+                    opacity: _headerFade,
+                    child: SlideTransition(
+                      position: _headerSlide,
+                      child: SafeArea(
+                        child: Column(
+                          children: [
 
-                                    return Column(
-                                      children: [
-                                        Row(
-                                          children: [
-                                            ScaleTransition(
-                                              scale: _pulseScale,
-                                              child: Container(
-                                                padding: const EdgeInsets.all(3),
-                                                decoration: BoxDecoration(
-                                                  shape: BoxShape.circle,
-                                                  boxShadow: [
-                                                    BoxShadow(
-                                                      color: Colors.white.withOpacity(0.1),
-                                                      blurRadius: 15,
-                                                      spreadRadius: 2,
-                                                    ),
-                                                  ],
-                                                  border: Border.all(color: Colors.white.withOpacity(0.3), width: 1),
-                                                ),
-                                                child: CircleAvatar(
-                                                  radius: 35,
-                                                  backgroundColor: Colors.white24,
-                                                  backgroundImage: selectedChild?.imageUrl != null
-                                                      ? NetworkImage(selectedChild!.imageUrl!)
-                                                      : null,
-                                                  child: selectedChild?.imageUrl == null
-                                                      ? const Icon(Icons.person, color: Colors.white, size: 40)
-                                                      : null,
-                                                ),
-                                              ),
-                                            ),
-                                            const SizedBox(width: 20),
-                                            Expanded(
-                                              child: Column(
-                                                crossAxisAlignment: CrossAxisAlignment.start,
-                                                children: [
-                                                  MainText(
-                                                    selectedChild?.name ?? 'البطل',
-                                                    color: Colors.white,
-                                                    fontSize: 22,
-                                                    fontWeight: FontWeight.bold,
-                                                  ),
-                                                  const SizedBox(height: 6),
-                                                  Container(
-                                                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                                                    decoration: BoxDecoration(
-                                                      color: Colors.white.withOpacity(0.1),
-                                                      borderRadius: BorderRadius.circular(20),
-                                                    ),
-                                                    child: MainText(
-                                                      rank,
-                                                      color: Colors.white,
-                                                      fontSize: 12,
-                                                      fontWeight: FontWeight.bold,
-                                                    ),
-                                                  ),
-                                                ],
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ],
-                                    );
-                                  },
-                                ),
-                                const SizedBox(height: 24),
-                                // Medal Stats HUD
-                                Container(
-                                  padding: const EdgeInsets.all(16),
-                                  decoration: BoxDecoration(
-                                    color: Colors.white.withOpacity(0.1),
-                                    borderRadius: BorderRadius.circular(24),
-                                    border: Border.all(color: Colors.white.withOpacity(0.1), width: 1),
-                                  ),
-                                  child: Row(
-                                    mainAxisAlignment: MainAxisAlignment.spaceAround,
-                                    children: [
-                                      _buildStatItem('ذهب', _getCount(achievements, 'gold'), const Color(0xFFFFD700)),
-                                      _buildStatDivider(),
-                                      _buildStatItem('فضة', _getCount(achievements, 'silver'), const Color(0xFFC0C0C0)),
-                                      _buildStatDivider(),
-                                      _buildStatItem('برونز', _getCount(achievements, 'bronze'), const Color(0xFFCD7F32)),
-                                    ],
-                                  ),
-                                ),
-                              ],
+                            const SizedBox(height: 20),
+
+                            Consumer(
+                              builder: (context, ref, child) {
+                                final selectedChild = ref.watch(childRiverpod).selectedChild;
+                                final achievements = ref.watch(achievementRiverpod).achievementList;
+
+                                final goldCount = _getCount(achievements, 'gold');
+                                final silverCount = _getCount(achievements, 'silver');
+                                final bronzeCount = _getCount(achievements, 'bronze');
+
+                                int level = 1;
+                                try {
+                                  level = int.parse(selectedChild?.level ?? '1');
+                                } catch (_) {}
+
+                                return Column(
+                                  children: [
+                                    PulsingAvatar(
+                                      imageUrl: selectedChild?.imageUrl,
+                                      level: level,
+                                      radius: 65,
+                                    ),
+                                    const SizedBox(height: 20),
+                                    MainText(
+                                      selectedChild?.name ?? 'Ø§Ù„Ø¨Ø·Ù„',
+                                      color: isDark ? Colors.white : AppColors.lightText,
+                                      fontSize: 28,
+                                      fontWeight: FontWeight.w900,
+                                    ),
+                                    const SizedBox(height: 24),
+
+                                    AchievementStatsHUD(
+                                      goldCount: goldCount,
+                                      silverCount: silverCount,
+                                      bronzeCount: bronzeCount,
+                                    ),
+                                    const SizedBox(height: 32),
+                                  ],
+                                );
+                              },
                             ),
-                          ),
+                          ],
                         ),
-                      ],
+                      ),
                     ),
                   ),
                 ),
-              ),
+
+                if (achievementState.isLoading)
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.all(24),
+                      child: MainShimmer.achievementCard(),
+                    ),
+                  )
+                else if (achievements.isEmpty)
+                  SliverFillRemaining(
+                    hasScrollBody: false,
+                    child: Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.emoji_events_outlined,
+                            size: 80,
+                            color: isDark ? Colors.white.withOpacity(0.05) : Colors.grey[200],
+                          ),
+                          const SizedBox(height: 24),
+                          MainText(
+                            'Ù„Ø§ ÙŠÙˆØ¬Ø¯ Ø¥Ù†Ø¬Ø§Ø²Ø§Øª Ù„Ù‡Ø°Ø§ Ø§Ù„Ø¨Ø·Ù„ Ø­Ø§Ù„ÙŠØ§Ù‹',
+                            color: isDark ? Colors.white24 : Colors.grey,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ],
+                      ),
+                    ),
+                  )
+                else
+                  SliverPadding(
+                    padding: const EdgeInsets.fromLTRB(24, 32, 24, 120),
+                    sliver: SliverList(
+                      delegate: SliverChildBuilderDelegate(
+                        (context, index) {
+                          if (index == achievements.length) {
+                            return achievementState.isLoadingMore
+                                ? Padding(
+                                    padding: const EdgeInsets.symmetric(vertical: 24),
+                                    child: MainShimmer.single(height: 120),
+                                  )
+                                : const SizedBox.shrink();
+                          }
+                          final item = achievements[index];
+                          return _AchievementCard(
+                            item: item,
+                            index: index,
+                            isDark: isDark,
+                          );
+                        },
+                        childCount: achievements.length +
+                            (achievementState.isLoadingMore ? 1 : 0),
+                      ),
+                    ),
+                  ),
+              ],
             ),
-
-            // 2. Achievements List
-            if (achievementState.isLoading)
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.all(20),
-                  child: MainShimmer.achievementCard(),
-                ),
-              )
-            else if (achievements.isEmpty)
-              SliverFillRemaining(
-                child: Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        Icons.emoji_events_outlined,
-                        size: 72,
-                        color: Colors.grey[300],
-                      ),
-                      const SizedBox(height: 16),
-                      MainText(
-                        'لا يوجد إنجازات لهذا البطل حالياً',
-                        color: Colors.grey,
-                        fontSize: 16,
-                      ),
-                    ],
-                  ),
-                ),
-              )
-            else
-              SliverPadding(
-                padding: const EdgeInsets.fromLTRB(20, 24, 20, 0),
-                sliver: SliverList(
-                  delegate: SliverChildBuilderDelegate(
-                    (context, index) {
-                      if (index == achievements.length) {
-                        return achievementState.isLoadingMore
-                            ? Padding(
-                                padding: const EdgeInsets.symmetric(vertical: 16),
-                                child: MainShimmer.single(height: 100),
-                              )
-                            : const SizedBox.shrink();
-                      }
-                      final item = achievements[index];
-                      return _AchievementCard(
-                        item: item,
-                        index: index,
-                        isDark: isDark,
-                      );
-                    },
-                    childCount: achievements.length +
-                        (achievementState.isLoadingMore ? 1 : 0),
-                  ),
-                ),
-              ),
-            const SliverToBoxAdapter(child: SizedBox(height: 100)),
-          ],
-        ),
+          ),
+        ],
       ),
-    ],
-  ),
-);
-}
+    );
+  }
 
   int _getCount(List<AchievementModel> achievements, String type) {
     return achievements.where((a) {
       final t = a.championType?.toLowerCase() ?? '';
-      if (type == 'gold') return t == 'gold' || t == 'ذهب';
-      if (type == 'silver') return t == 'silver' || t == 'فضة';
-      if (type == 'bronze') return t == 'bronze' || t == 'برونز';
+      if (type == 'gold') return t == 'gold' || t == '???';
+      if (type == 'silver') return t == 'silver' || t == '???';
+      if (type == 'bronze') return t == 'bronze' || t == '?????';
       return false;
     }).length;
   }
-
-  Widget _buildStatItem(String label, int count, Color color) {
-    return Column(
-      children: [
-        MainText(
-          count.toString(),
-          color: Colors.white,
-          fontSize: 20,
-          fontWeight: FontWeight.bold,
-        ),
-        const SizedBox(height: 4),
-        Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 8,
-              height: 8,
-              decoration: BoxDecoration(
-                color: color,
-                shape: BoxShape.circle,
-                boxShadow: [
-                  BoxShadow(color: color.withOpacity(0.5), blurRadius: 4, spreadRadius: 1),
-                ],
-              ),
-            ),
-            const SizedBox(width: 6),
-            MainText(
-              label,
-              color: Colors.white60,
-              fontSize: 12,
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-
-  Widget _buildStatDivider() {
-    return Container(
-      height: 30,
-      width: 1,
-      color: Colors.white12,
-    );
-  }
 }
-
-// ─── Achievement Card Widget ───────────────────────────────────────────────────
 
 class _AchievementCard extends StatefulWidget {
   final AchievementModel item;
@@ -398,14 +271,14 @@ class _AchievementCardState extends State<_AchievementCard>
   late Animation<double> _opacity;
   late Animation<Offset> _slide;
   late Animation<double> _scale;
-  late Animation<double> _rotate; // Added for 3D effect
+  late Animation<double> _rotate;
 
   @override
   void initState() {
     super.initState();
     _fadeController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 700), // Slightly longer for 3D
+      duration: const Duration(milliseconds: 700),
     );
     _clickController = AnimationController(
       vsync: this,
@@ -423,10 +296,6 @@ class _AchievementCardState extends State<_AchievementCard>
       CurvedAnimation(parent: _fadeController, curve: Curves.easeOut),
     );
     
-    // Tap scale animation
-    _clickController.addListener(() {}); // Ensure it rebuilds if needed
-
-    // Stagger based on index
     final delay = Duration(milliseconds: 80 * (widget.index.clamp(0, 6)));
     Future.delayed(delay, () {
       if (mounted) _fadeController.forward();
@@ -443,27 +312,27 @@ class _AchievementCardState extends State<_AchievementCard>
   Color _getMedalColor(String? championType) {
     switch (championType?.toLowerCase()) {
       case 'gold':
-      case 'ذهب':
-        return const Color(0xFFFFD700);
+      case '???':
+        return AppColors.achievementGold;
       case 'silver':
-      case 'فضة':
+      case '???':
         return const Color(0xFFC0C0C0);
       case 'bronze':
-      case 'برونز':
+      case '?????':
         return const Color(0xFFCD7F32);
       default:
-        return const Color(0xFF7C6AF7);
+        return AppColors.primaryCrimson;
     }
   }
 
   IconData _getMedalIcon(String? championType) {
     switch (championType?.toLowerCase()) {
       case 'gold':
-      case 'ذهب':
+      case '???':
       case 'silver':
-      case 'فضة':
+      case '???':
       case 'bronze':
-      case 'برونز':
+      case '?????':
         return Icons.emoji_events_rounded;
       default:
         return Icons.star_rounded;
@@ -476,14 +345,14 @@ class _AchievementCardState extends State<_AchievementCard>
     final isDark = widget.isDark;
     final hasImage = item.imageUrl != null && item.imageUrl!.isNotEmpty;
     final medalColor = _getMedalColor(item.championType);
-    final cardBg = isDark ? const Color(0xFF1E1E1E) : Colors.white;
+    final cardBg = isDark ? AppColors.darkSurface : Colors.white;
 
     return FadeTransition(
       opacity: _opacity,
       child: SlideTransition(
         position: _slide,
         child: Padding(
-          padding: const EdgeInsets.only(bottom: 20),
+          padding: const EdgeInsets.only(bottom: 24),
           child: GestureDetector(
             onTapDown: (_) => _clickController.forward(),
             onTapUp: (_) {
@@ -501,9 +370,9 @@ class _AchievementCardState extends State<_AchievementCard>
               builder: (context, child) {
                 return Transform(
                   transform: Matrix4.identity()
-                    ..setEntry(3, 2, 0.001) // Perspective
-                    ..rotateX(_rotate.value) // Flip-up effect
-                    ..scale(_scale.value), // Use the elastic scale animation
+                    ..setEntry(3, 2, 0.001)
+                    ..rotateX(_rotate.value)
+                    ..scale(_scale.value),
                   alignment: Alignment.center,
                   child: ScaleTransition(
                     scale: Tween<double>(begin: 1.0, end: 0.97).animate(
@@ -518,25 +387,24 @@ class _AchievementCardState extends State<_AchievementCard>
                 child: Container(
                   decoration: BoxDecoration(
                     color: cardBg,
-                    borderRadius: BorderRadius.circular(28),
-                    border: Border.all(
-                      color: medalColor.withOpacity(0.2),
-                      width: 1.5,
-                    ),
+                    borderRadius: BorderRadius.circular(32),
                     boxShadow: [
                       BoxShadow(
-                        color: medalColor.withOpacity(0.1),
-                        blurRadius: 20,
-                        spreadRadius: -5,
+                        color: Colors.black.withOpacity(isDark ? 0.3 : 0.05),
+                        blurRadius: 15,
+                        offset: const Offset(0, 8),
                       ),
                     ],
+                    border: Border.all(
+                      color: isDark ? Colors.white.withOpacity(0.05) : Colors.grey.withOpacity(0.05),
+                      width: 1.5,
+                    ),
                   ),
                   child: ClipRRect(
-                    borderRadius: BorderRadius.circular(28),
+                    borderRadius: BorderRadius.circular(32),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Achievement Image (if available)
                         if (hasImage)
                           Stack(
                             children: [
@@ -547,35 +415,32 @@ class _AchievementCardState extends State<_AchievementCard>
                                 fit: BoxFit.cover,
                                 placeholder: (context, url) => Container(
                                   height: 200,
-                                  color: isDark
-                                      ? const Color(0xFF2A2A2A)
-                                      : Colors.grey[100],
+                                  color: isDark ? const Color(0xFF1E1414) : Colors.grey[100],
                                   child: const Center(
-                                    child: CircularProgressIndicator(strokeWidth: 2),
+                                    child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primaryCrimson),
                                   ),
                                 ),
                               ),
-                              // Medal Type Badge on Image
                               Positioned(
                                 top: 16,
                                 right: 16,
                                 child: Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                                   decoration: BoxDecoration(
-                                    color: Colors.black.withOpacity(0.6),
-                                    borderRadius: BorderRadius.circular(20),
-                                    border: Border.all(color: medalColor.withOpacity(0.5), width: 1),
+                                    color: Colors.black.withOpacity(0.7),
+                                    borderRadius: BorderRadius.circular(30),
+                                    border: Border.all(color: medalColor.withOpacity(0.5), width: 1.5),
                                   ),
                                   child: Row(
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
-                                      Icon(Icons.stars, color: medalColor, size: 14),
-                                      const SizedBox(width: 4),
+                                      Icon(Icons.stars_rounded, color: medalColor, size: 16),
+                                      const SizedBox(width: 6),
                                       MainText(
                                         item.championType ?? '',
                                         color: Colors.white,
-                                        fontSize: 10,
-                                        fontWeight: FontWeight.bold,
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w900,
                                       ),
                                     ],
                                   ),
@@ -584,64 +449,83 @@ class _AchievementCardState extends State<_AchievementCard>
                             ],
                           ),
 
-                        // Card Body
                         Padding(
-                          padding: const EdgeInsets.all(20),
-                          child: Row(
+                          padding: const EdgeInsets.all(24),
+                          child: Column(
                             children: [
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    MainText(
-                                      item.title,
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.bold,
+                              Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.all(16),
+                                    decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      color: medalColor.withOpacity(0.12),
+                                      border: Border.all(color: medalColor.withOpacity(0.2), width: 1),
                                     ),
-                                    const SizedBox(height: 8),
-                                    Row(
+                                    child: Icon(
+                                      _getMedalIcon(item.championType),
+                                      color: medalColor,
+                                      size: 32,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 16),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
-                                        Icon(Icons.person, size: 12, color: AppColors.primaryColor.withOpacity(0.6)),
-                                        const SizedBox(width: 4),
                                         MainText(
-                                          item.participantName ?? '',
-                                          fontSize: 13,
-                                          color: Colors.grey[600],
+                                          item.title,
+                                          fontSize: 20,
+                                          fontWeight: FontWeight.w900,
+                                          color: isDark ? Colors.white : Colors.black87,
+                                          maxLines: 2,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                        const SizedBox(height: 12),
+                                        Row(
+                                          children: [
+                                            Icon(Icons.person_rounded, size: 14, color: AppColors.primaryCrimson.withOpacity(0.6)),
+                                            const SizedBox(width: 6),
+                                            Expanded(
+                                              child: MainText(
+                                                item.participantName ?? '',
+                                                fontSize: 14,
+                                                fontWeight: FontWeight.w700,
+                                                color: isDark ? Colors.white54 : Colors.grey[600],
+                                                maxLines: 1,
+                                                overflow: TextOverflow.ellipsis,
+                                              ),
+                                            ),
+                                          ],
                                         ),
                                       ],
                                     ),
-                                    const SizedBox(height: 12),
-                                    Row(
-                                      children: [
-                                        if (item.date != null)
-                                          _InfoBadge(
-                                            icon: Icons.calendar_today_rounded,
-                                            text: DateFormat('d MMMM yyyy', 'ar').format(item.date!),
-                                            isDark: isDark,
-                                          ),
-                                        const SizedBox(width: 12),
-                                        if (item.venue != null && item.venue!.isNotEmpty)
-                                          _InfoBadge(
-                                            icon: Icons.pin_drop_rounded,
-                                            text: item.venue!,
-                                            isDark: isDark,
-                                          ),
-                                      ],
-                                    ),
-                                  ],
-                                ),
+                                  ),
+                                ],
                               ),
-                              Container(
-                                padding: const EdgeInsets.all(12),
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  color: medalColor.withOpacity(0.1),
-                                ),
-                                child: Icon(
-                                  _getMedalIcon(item.championType),
-                                  color: medalColor,
-                                  size: 28,
-                                ),
+                              const SizedBox(height: 16),
+                              Row(
+                                children: [
+                                  if (item.date != null)
+                                    Expanded(
+                                      child: _InfoBadge(
+                                        icon: Icons.calendar_today_rounded,
+                                        text: DateFormat('d MMMM yyyy', 'ar').format(item.date!),
+                                        isDark: isDark,
+                                      ),
+                                    ),
+                                  if (item.date != null && item.venue != null && item.venue!.isNotEmpty)
+                                    const SizedBox(width: 12),
+                                  if (item.venue != null && item.venue!.isNotEmpty)
+                                    Expanded(
+                                      child: _InfoBadge(
+                                        icon: Icons.location_on_rounded,
+                                        text: item.venue!,
+                                        isDark: isDark,
+                                      ),
+                                    ),
+                                ],
                               ),
                             ],
                           ),
@@ -669,17 +553,24 @@ class _InfoBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
         color: isDark ? Colors.white.withOpacity(0.05) : Colors.black.withOpacity(0.03),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(14),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 12, color: Colors.grey),
-          const SizedBox(width: 6),
-          MainText(text, fontSize: 11, color: Colors.grey),
+          Icon(icon, size: 14, color: AppColors.primaryCrimson.withOpacity(0.5)),
+          const SizedBox(width: 8),
+          Flexible(
+            child: MainText(
+              text, 
+              fontSize: 12, 
+              color: isDark ? Colors.white38 : Colors.grey[600],
+              fontWeight: FontWeight.w700,
+            ),
+          ),
         ],
       ),
     );
@@ -695,38 +586,86 @@ class AchievementDetailScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final medalColor = _getMedalColor(item.championType);
-    
+    final bgColor = isDark ? AppColors.darkBackground : const Color(0xFFF5F6FA);
+    final cardColor = isDark ? AppColors.darkSurface : Colors.white;
+
     return Scaffold(
-      backgroundColor: isDark ? const Color(0xFF121212) : const Color(0xFFF5F6FA),
+      backgroundColor: bgColor,
       body: CustomScrollView(
+        physics: const BouncingScrollPhysics(),
         slivers: [
           SliverAppBar(
-            expandedHeight: 400,
+            backgroundColor: Colors.transparent,
+            elevation: 0,
             pinned: true,
-            backgroundColor: isDark ? const Color(0xFF1A1A1A) : AppColors.primaryColor,
-            leading: IconButton(
-              icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white, size: 20),
-              onPressed: () => Navigator.pop(context),
+            expandedHeight: 320,
+            leadingWidth: 72,
+            leading: Padding(
+              padding: const EdgeInsets.only(left: 16, top: 8, bottom: 8),
+              child: CustomAppBarButton(
+                icon: Icons.arrow_back_ios_new_rounded,
+                onPressed: () => Navigator.pop(context),
+                iconColor: AppColors.primaryCrimson,
+                backgroundColor: AppColors.primaryCrimson.withOpacity(0.12),
+              ),
             ),
+            actions: [
+              Padding(
+                padding: const EdgeInsets.only(right: 16, top: 8, bottom: 8),
+                child: CustomAppBarButton(
+                  icon: Icons.share_rounded,
+                  onPressed: () {},
+                ),
+              ),
+            ],
             flexibleSpace: FlexibleSpaceBar(
+              titlePadding: const EdgeInsets.only(left: 80, bottom: 16, right: 16),
+              title: MainText(
+                'تفاصيل الإنجاز',
+                fontSize: 18,
+                fontWeight: FontWeight.w900,
+                color: Colors.white,
+              ),
               background: Hero(
                 tag: 'achievement_${item.id}',
                 child: Stack(
                   fit: StackFit.expand,
                   children: [
-                    if (item.imageUrl != null)
+                    if (item.imageUrl != null && item.imageUrl!.isNotEmpty)
                       CachedNetworkImage(
                         imageUrl: item.imageUrl!,
                         fit: BoxFit.cover,
                       ),
                     Container(
-                      decoration: BoxDecoration(
+                      decoration: const BoxDecoration(
                         gradient: LinearGradient(
                           begin: Alignment.topCenter,
                           end: Alignment.bottomCenter,
-                          colors: [
-                            Colors.black.withOpacity(0.3),
-                            Colors.black.withOpacity(0.7),
+                          colors: [Colors.transparent, Colors.black54],
+                        ),
+                      ),
+                    ),
+                    Positioned(
+                      top: 100,
+                      right: 20,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: Colors.black.withOpacity(0.55),
+                          borderRadius: BorderRadius.circular(30),
+                          border: Border.all(color: medalColor.withOpacity(0.5), width: 1.2),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(Icons.stars_rounded, color: Colors.white, size: 16),
+                            const SizedBox(width: 6),
+                            MainText(
+                              item.championType ?? '',
+                              color: Colors.white,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w800,
+                            ),
                           ],
                         ),
                       ),
@@ -736,89 +675,197 @@ class AchievementDetailScreen extends StatelessWidget {
               ),
             ),
           ),
+
           SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.all(24),
+              padding: const EdgeInsets.fromLTRB(24, 24, 24, 32),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                        decoration: BoxDecoration(
-                          color: medalColor.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(color: medalColor.withOpacity(0.3)),
+                  Container(
+                    decoration: BoxDecoration(
+                      color: cardColor,
+                      borderRadius: BorderRadius.circular(32),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(isDark ? 0.3 : 0.06),
+                          blurRadius: 18,
+                          offset: const Offset(0, 10),
                         ),
-                        child: Row(
+                      ],
+                      border: Border.all(
+                        color: isDark ? Colors.white.withOpacity(0.05) : Colors.grey.withOpacity(0.08),
+                        width: 1.5,
+                      ),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(24),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(14),
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: medalColor.withOpacity(0.12),
+                                  border: Border.all(color: medalColor.withOpacity(0.3), width: 1),
+                                ),
+                                child: Icon(Icons.emoji_events_rounded, color: medalColor, size: 28),
+                              ),
+                              const SizedBox(width: 14),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    MainText(
+                                      item.title,
+                                      fontSize: 22,
+                                      fontWeight: FontWeight.w900,
+                                      color: isDark ? Colors.white : Colors.black87,
+                                    ),
+                                    const SizedBox(height: 6),
+                                    MainText(
+                                      item.participantName ?? '',
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w700,
+                                      color: isDark ? Colors.white54 : Colors.grey[600],
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 18),
+                          Wrap(
+                            spacing: 12,
+                            runSpacing: 12,
+                            children: [
+                              _InfoBadge(
+                                icon: Icons.calendar_today_rounded,
+                                text: item.date != null
+                                    ? DateFormat('d MMMM yyyy', 'ar').format(item.date!)
+                                    : '-',
+                                isDark: isDark,
+                              ),
+                              if (item.venue != null && item.venue!.isNotEmpty)
+                                _InfoBadge(
+                                  icon: Icons.location_on_rounded,
+                                  text: item.venue!,
+                                  isDark: isDark,
+                                ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(28),
+                    decoration: BoxDecoration(
+                      color: cardColor,
+                      borderRadius: BorderRadius.circular(32),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(isDark ? 0.25 : 0.05),
+                          blurRadius: 16,
+                          offset: const Offset(0, 10),
+                        ),
+                      ],
+                      border: Border.all(
+                        color: isDark ? Colors.white.withOpacity(0.05) : Colors.grey.withOpacity(0.08),
+                        width: 1.3,
+                      ),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
                           children: [
-                            Icon(Icons.emoji_events, color: medalColor, size: 18),
-                            const SizedBox(width: 8),
+                            Container(
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: AppColors.primaryCrimson.withOpacity(0.1),
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(Icons.location_on_rounded, color: AppColors.primaryCrimson, size: 22),
+                            ),
+                            const SizedBox(width: 12),
                             MainText(
-                              item.championType?.toUpperCase() ?? 'AWARD',
-                              color: medalColor,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 12,
+                              'المكان',
+                              fontSize: 18,
+                              fontWeight: FontWeight.w900,
+                              color: isDark ? Colors.white : Colors.black87,
                             ),
                           ],
                         ),
-                      ),
-                      const Spacer(),
-                      IconButton(
-                        onPressed: () {}, // Simulated Share
-                        icon: const Icon(Icons.ios_share, color: AppColors.primaryColor),
-                        tooltip: 'Share Achievement',
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 24),
-                  MainText(
-                    item.title,
-                    fontSize: 28,
-                    fontWeight: FontWeight.bold,
-                  ),
-                  const SizedBox(height: 16),
-                  const Divider(height: 40),
-                  _DetailRow(icon: Icons.calendar_today, label: 'التاريخ', value: item.date != null ? DateFormat('d MMMM yyyy', 'ar').format(item.date!) : '-'),
-                  _DetailRow(icon: Icons.location_on, label: 'المكان', value: item.venue ?? '-'),
-                  _DetailRow(icon: Icons.person, label: 'المشارك', value: item.participantName ?? '-'),
-                  const SizedBox(height: 40),
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(24),
-                    decoration: BoxDecoration(
-                      color: isDark ? Colors.white.withOpacity(0.05) : Colors.white,
-                      borderRadius: BorderRadius.circular(24),
-                      border: Border.all(color: Colors.white.withOpacity(0.1)),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.05),
-                          blurRadius: 10,
-                          offset: const Offset(0, 4),
+                        const SizedBox(height: 14),
+                        MainText(
+                          item.venue ?? '?? ???? ??? ???? ???? ???????.',
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                          color: isDark ? Colors.white70 : Colors.grey[700],
+                        ),
+                        const SizedBox(height: 20),
+                        _DetailRow(
+                          icon: Icons.verified_rounded,
+                          label: 'نوع الميدالية',
+                          value: (item.championType ?? 'إنجاز').toUpperCase(),
+                          isDark: isDark,
                         ),
                       ],
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(32),
+                    decoration: BoxDecoration(
+                      color: cardColor,
+                      borderRadius: BorderRadius.circular(32),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(isDark ? 0.25 : 0.05),
+                          blurRadius: 16,
+                          offset: const Offset(0, 10),
+                        ),
+                      ],
+                      border: Border.all(
+                        color: isDark ? Colors.white.withOpacity(0.05) : Colors.grey.withOpacity(0.08),
+                        width: 1.3,
+                      ),
                     ),
                     child: Column(
                       children: [
-                        const Icon(Icons.verified_user_rounded, color: Colors.green, size: 48),
-                        const SizedBox(height: 16),
+                        Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: Colors.green.withOpacity(0.1),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(Icons.verified_user_rounded, color: Colors.green, size: 48),
+                        ),
+                        const SizedBox(height: 18),
                         MainText(
                           'شهادة إنجاز معتمدة',
                           fontSize: 20,
-                          fontWeight: FontWeight.bold,
+                          fontWeight: FontWeight.w900,
+                          color: isDark ? Colors.white : Colors.black87,
                         ),
-                        const SizedBox(height: 8),
+                        const SizedBox(height: 10),
                         MainText(
-                          'تم توثيق هذا الإنجاز بنجاح في سجلات النادي',
-                          color: Colors.grey,
+                          'تم توثيق هذا الإنجاز في سجلات النادي، فخراً بك يا بطل!',
+                          color: isDark ? Colors.white54 : Colors.grey[600],
                           fontSize: 14,
                           textAlign: TextAlign.center,
+                          fontWeight: FontWeight.w700,
                         ),
                       ],
                     ),
                   ),
-                  const SizedBox(height: 100),
                 ],
               ),
             ),
@@ -829,11 +876,10 @@ class AchievementDetailScreen extends StatelessWidget {
   }
 
   Color _getMedalColor(String? type) {
-    final t = type?.toLowerCase() ?? '';
-    if (t == 'gold' || t == 'ذهب') return const Color(0xFFFFD700);
-    if (t == 'silver' || t == 'فضة') return const Color(0xFFC0C0C0);
-    if (t == 'bronze' || t == 'برونز') return const Color(0xFFCD7F32);
-    return Colors.blue;
+    if (type == 'gold' || type == 'ذهب') return AppColors.achievementGold;
+    if (type == 'silver' || type == 'فضة') return const Color(0xFFC0C0C0);
+    if (type == 'bronze' || type == 'برونز') return const Color(0xFFCD7F32);
+    return AppColors.primaryCrimson;
   }
 }
 
@@ -841,30 +887,31 @@ class _DetailRow extends StatelessWidget {
   final IconData icon;
   final String label;
   final String value;
+  final bool isDark;
 
-  const _DetailRow({required this.icon, required this.label, required this.value});
+  const _DetailRow({required this.icon, required this.label, required this.value, required this.isDark});
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 20),
+      padding: const EdgeInsets.only(bottom: 24),
       child: Row(
         children: [
           Container(
-            padding: const EdgeInsets.all(10),
+            padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: AppColors.primaryColor.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(12),
+              color: AppColors.primaryCrimson.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(16),
             ),
-            child: Icon(icon, color: AppColors.primaryColor, size: 20),
+            child: Icon(icon, color: AppColors.primaryCrimson, size: 24),
           ),
-          const SizedBox(width: 16),
+          const SizedBox(width: 20),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              MainText(label, color: Colors.grey, fontSize: 12),
-              const SizedBox(height: 4),
-              MainText(value, fontSize: 16, fontWeight: FontWeight.bold),
+              MainText(label, color: isDark ? Colors.white38 : Colors.grey[500], fontSize: 13, fontWeight: FontWeight.w700),
+              const SizedBox(height: 6),
+              MainText(value, fontSize: 18, fontWeight: FontWeight.w900, color: isDark ? Colors.white : Colors.black87),
             ],
           ),
         ],
@@ -905,12 +952,9 @@ class _SparkleEffectState extends State<SparkleEffect>
     return AnimatedBuilder(
       animation: _controller,
       builder: (context, child) {
-        for (var p in _particles) {
-          p.update();
-        }
         return CustomPaint(
-          painter: ParticlePainter(_particles),
-          child: Container(),
+          painter: SparklePainter(_particles),
+          size: Size.infinite,
         );
       },
     );
@@ -921,36 +965,38 @@ class Particle {
   double x = 0;
   double y = 0;
   double size = 0;
-  double velocity = 0;
+  double speed = 0;
   double opacity = 0;
+  final _random = Random();
 
   Particle() {
     reset();
   }
 
   void reset() {
-    final random = DateTime.now().microsecondsSinceEpoch;
-    x = (random % 400).toDouble() / 400;
-    y = 1.0;
-    size = (random % 3 + 1).toDouble();
-    velocity = (random % 10 + 5).toDouble() / 10000;
-    opacity = (random % 50 + 10).toDouble() / 100;
+    x = _random.nextDouble();
+    y = _random.nextDouble() + 1.0;
+    size = _random.nextDouble() * 3 + 1;
+    speed = _random.nextDouble() * 0.002 + 0.001;
+    opacity = _random.nextDouble() * 0.5 + 0.2;
   }
 
   void update() {
-    y -= velocity;
-    if (y < 0) reset();
+    y -= speed;
+    if (y < -0.1) reset();
   }
 }
 
-class ParticlePainter extends CustomPainter {
+class SparklePainter extends CustomPainter {
   final List<Particle> particles;
-  ParticlePainter(this.particles);
+
+  SparklePainter(this.particles);
 
   @override
   void paint(Canvas canvas, Size size) {
-    final paint = Paint()..color = Colors.white;
+    final paint = Paint();
     for (var p in particles) {
+      p.update();
       canvas.drawCircle(
         Offset(p.x * size.width, p.y * size.height),
         p.size,
@@ -960,5 +1006,8 @@ class ParticlePainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(CustomPainter oldDelegate) => true;
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
 }
+
+
+

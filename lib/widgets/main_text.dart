@@ -34,12 +34,12 @@ class MainText extends StatelessWidget {
 
   // final
 
-  /// this is style for title for all app with size=16 and fontWeight=700
+  /// this is style for title for all app with size=20 and fontWeight=700
   const MainText.heading(
       this.text, {
         super.key,
         this.color,
-        this.fontSize = 16,
+        this.fontSize = 20,
         this.fontWeight = FontWeight.w700,
         this.textAlign,
         this.textDirection,
@@ -52,12 +52,12 @@ class MainText extends StatelessWidget {
         this.height,
       });
 
-  /// this is style for title for all app with size=14, color=grey and fontWeight=400
+  /// this is style for title for all app with size=16, color=grey and fontWeight=400
   const MainText.subHeading(
       this.text, {
         super.key,
         this.color,
-        this.fontSize = 14,
+        this.fontSize = 16,
         this.fontWeight = FontWeight.w400,
         this.textAlign,
         this.textDirection,
@@ -70,12 +70,12 @@ class MainText extends StatelessWidget {
         this.height,
       });
 
-  /// this is style for title for all app with size=14,color=white and fontWeight=700
+  /// this is style for title for all app with size=16,color=white and fontWeight=700
   const MainText.txtButton(
       this.text, {
         super.key,
         this.color,
-        this.fontSize = 14,
+        this.fontSize = 16,
         this.fontWeight = FontWeight.w700,
         this.textAlign,
         this.textDirection,

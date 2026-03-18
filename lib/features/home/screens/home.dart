@@ -1,12 +1,11 @@
 import 'dart:async';
-import 'dart:ui';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/costants/app_assets.dart';
+import '../../../core/costants/app_icons.dart';
 import '../../../core/theme/app_colors.dart';
-import '../../../core/utils/date_converter.dart';
 import '../../../widgets/shimmer_widgets.dart';
 import '../../../widgets/main_text.dart';
 import '../../../data/models/models/news_model.dart';
@@ -28,7 +27,7 @@ class HomePage extends ConsumerStatefulWidget {
 
 class _HomePageState extends ConsumerState<HomePage> {
   final ScrollController _scrollController = ScrollController();
-  
+
   @override
   void initState() {
     super.initState();
@@ -42,7 +41,6 @@ class _HomePageState extends ConsumerState<HomePage> {
     _scrollController.dispose();
     super.dispose();
   }
-
 
   void _onScroll() {
     if (_scrollController.position.pixels >=
@@ -68,23 +66,10 @@ class _HomePageState extends ConsumerState<HomePage> {
     });
   }
 
-  String _getGreeting() {
-    final hour = DateTime.now().hour;
-    if (hour >= 5 && hour < 12) {
-      return 'صباح الخير';
-    } else if (hour >= 12 && hour < 17) {
-      return 'طاب يومك';
-    } else if (hour >= 17 && hour < 21) {
-      return 'مساء الخير';
-    } else {
-      return 'ليلة سعيدة';
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final bool isDark = Theme.of(context).brightness == Brightness.dark;
-    
+
     ref.listen(childRiverpod, (previous, next) {
       if (previous?.selectedChild?.id != next.selectedChild?.id) {
         _fetchChildData();
@@ -96,28 +81,28 @@ class _HomePageState extends ConsumerState<HomePage> {
     });
 
     return Scaffold(
+      backgroundColor: isDark ? AppColors.darkBackground : const Color(0xFFF8F9FA),
       body: Consumer(
         builder: (context, ref, child) {
           final newsState = ref.watch(newsRiverpod);
           final childState = ref.watch(childRiverpod);
           final user = childState.selectedChild;
-
           final newsList = newsState.newsList;
           final firstNews = newsList.isNotEmpty ? newsList.first : null;
 
-          // Helper to check if news is "Important" or "Schedule Change"
           bool isImportant(NewsModel? news) {
             if (news == null) return false;
             final type = news.type?.toLowerCase() ?? '';
-            return type == 'warning' || 
-                   type == 'تنبيه مهم' || 
-                   type == 'تنلبه مهم' || 
-                   type == 'تعديل جدول';
+            return type == 'warning' ||
+                type == 'تنبيه مهم' ||
+                type == 'تنلبه مهم' ||
+                type == 'تعديل جدول';
           }
 
           final showFeaturedAtTop = isImportant(firstNews);
 
           return RefreshIndicator(
+            color: AppColors.primaryColor,
             onRefresh: () async {
               await ref.read(childRiverpod.notifier).getChildren();
               _fetchNews(force: true);
@@ -126,217 +111,212 @@ class _HomePageState extends ConsumerState<HomePage> {
             child: CustomScrollView(
               controller: _scrollController,
               slivers: [
-                // 1. Curved Dark Navy Header with HUD style
                 SliverToBoxAdapter(
                   child: Container(
-                    height: 200,
-                    width: double.infinity,
-                    decoration: const BoxDecoration(
-                      color: AppColors.primaryColor,
-                      borderRadius: BorderRadius.only(
-                        bottomLeft: Radius.circular(40),
-                        bottomRight: Radius.circular(40),
-                      ),
-                    ),
-                    child: Stack(
-                      children: [
-                        // Decorative Glass Circle
-                        Positioned(
-                          top: -50,
-                          right: -50,
-                          child: Container(
-                            width: 200,
-                            height: 200,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: Colors.white.withOpacity(0.05),
-                            ),
-                          ),
-                        ),
-                        SafeArea(
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
-                            child: Row(
-                              children: [
-                                Container(
-                                  padding: const EdgeInsets.all(3),
-                                  decoration: BoxDecoration(
-                                    shape: BoxShape.circle,
-                                    border: Border.all(color: Colors.white.withOpacity(0.2), width: 2),
-                                  ),
-                                  child: CircleAvatar(
-                                    radius: 30,
-                                    backgroundColor: Colors.white24,
-                                    backgroundImage: user?.imageUrl != null
-                                        ? NetworkImage(user!.imageUrl!)
-                                        : const AssetImage(AppAssets.userPlaceholder) as ImageProvider,
-                                  ),
-                                ),
-                                const SizedBox(width: 16),
-                                Expanded(
-                                  child: Column(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      MainText(
-                                        user?.name != null ? 'مرحباً يا بطل، ${user!.name}' : 'مرحباً يا بطل',
-                                        color: Colors.white,
-                                        fontSize: 20,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                      const SizedBox(height: 6),
-                                      Container(
-                                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                                        decoration: BoxDecoration(
-                                          color: Colors.white.withOpacity(0.1),
-                                          borderRadius: BorderRadius.circular(20),
-                                        ),
-                                        child: MainText(
-                                          '${_getGreeting()} 👋',
-                                          color: Colors.white.withOpacity(0.9),
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.w500,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                Container(
-                                  decoration: BoxDecoration(
-                                    color: Colors.white.withOpacity(0.1),
-                                    shape: BoxShape.circle,
-                                  ),
-                                  child: IconButton(
-                                    icon: const Icon(Icons.notifications_none,
-                                        color: Colors.white, size: 26),
-                                    onPressed: () {},
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
+                    padding: const EdgeInsets.only(bottom: 16),
+                    decoration: BoxDecoration(
+                      color: isDark ? AppColors.darkBackground : Colors.white,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: isDark ? 0.4 : 0.06),
+                          blurRadius: 25,
+                          offset: const Offset(0, 12),
                         ),
                       ],
+                    ),
+                    child: SafeArea(
+                      bottom: false,
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(24, 16, 24, 12),
+                        child: Row(
+                          children: [
+                            // ── 1. Avatar (Left) ──
+                            Container(
+                              padding: const EdgeInsets.all(2),
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                gradient: isDark ? AppColors.energyGradient : null,
+                                border: isDark ? null : Border.all(
+                                  color: AppColors.primaryColor.withOpacity(0.2),
+                                  width: 1.5,
+                                ),
+                              ),
+                              child: Container(
+                                padding: const EdgeInsets.all(2),
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: isDark ? AppColors.darkBackground : Colors.white,
+                                ),
+                                child: CircleAvatar(
+                                  radius: 20,
+                                  backgroundColor: isDark ? AppColors.darkSurface : AppColors.primaryColor.withOpacity(0.05),
+                                  backgroundImage: user?.imageUrl != null
+                                      ? NetworkImage(user!.imageUrl!)
+                                      : const AssetImage(AppAssets.userPlaceholder)
+                                          as ImageProvider,
+                                ),
+                              ),
+                            ),
+
+                            // ── 2. Greeting (Center) ──
+                            Expanded(
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                children: [
+                                  Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      MainText(
+                                        user?.name != null
+                                            ? 'مرحباً، ${user!.name}'
+                                            : 'مرحباً يا بطل',
+                                        color: isDark ? Colors.white : Colors.black,
+                                        fontSize: 20,
+                                        fontWeight: FontWeight.w900,
+                                      ),
+                                      const SizedBox(width: 6),
+                                      const MainText('👋', fontSize: 18),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 2),
+                                  MainText(
+                                    'جاهز للتدريب اليوم؟',
+                                    color: isDark ? Colors.white54 : Colors.grey[600],
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ],
+                              ),
+                            ),
+
+                            // ── 3. Logo (Right) ──
+                            Container(
+                              padding: const EdgeInsets.all(3),
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: isDark ? AppColors.darkSurface : Colors.white,
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.red.withOpacity(0.12),
+                                    blurRadius: 10,
+                                    spreadRadius: 2,
+                                  ),
+                                ],
+                              ),
+                              child: ClipOval(
+                                child: Image.asset(
+                                  AppIcons.logo,
+                                  height: 44,
+                                  width: 44,
+                                  fit: BoxFit.cover,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                     ),
                   ),
                 ),
 
-                // 2. Quick Actions Strip
+                // ── 2. Quick Actions ──
                 const SliverToBoxAdapter(
                   child: Padding(
-                    padding: EdgeInsets.only(top: 24),
+                    padding: EdgeInsets.only(top: 16),
                     child: QuickActions(),
                   ),
                 ),
 
-                // 3. Achievement Spotlight
-                const SliverToBoxAdapter(
-                  child: Padding(
-                    padding: EdgeInsets.only(top: 24),
-                    child: AchievementSpotlight(),
-                  ),
-                ),
-
-                // 4. Featured News at Top (if important)
+                // ── 3. Featured Important News (Top Priority) ──
                 if (showFeaturedAtTop)
                   SliverPadding(
-                    padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
+                    padding: const EdgeInsets.fromLTRB(24, 32, 24, 0),
                     sliver: SliverToBoxAdapter(
-                      child: _InteractionWrapper(
-                        child: _buildFeaturedCard(firstNews!, isDark),
+                      child: _TapWrapper(
+                        child: _buildLargeNewsCard(firstNews!, isDark, isFeatured: true),
                       ),
                     ),
                   ),
 
-                // 3. Upcoming Training (Schedule)
+                const SliverToBoxAdapter(child: SizedBox(height: 32)),
+
+                // ── 7. Upcoming Training Section ──
                 SliverPadding(
-                  padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
+                  padding: const EdgeInsets.symmetric(horizontal: 24),
                   sliver: SliverToBoxAdapter(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const MainText(
+                        MainText(
                           'التدريبات القادمة',
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
+                          fontSize: 20,
+                          fontWeight: FontWeight.w900,
+                          color: isDark ? Colors.white : Colors.black87,
                         ),
-                        const SizedBox(height: 16),
-                        _buildUpcomingTraining(ref, isDark),
-                        const SizedBox(height: 24),
-                        if (newsState.newsList.length > (showFeaturedAtTop ? 1 : 0))
-                          const MainText(
-                            'آخر الأخبار',
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        if (newsState.newsList.length > (showFeaturedAtTop ? 1 : 0))
-                          const SizedBox(height: 16),
+                        const SizedBox(height: 20),
+                        const TrainingCountdown(),
                       ],
                     ),
                   ),
                 ),
 
-                // 4. Featured News below Schedule (if NOT important)
-                if (!showFeaturedAtTop && newsState.newsList.isNotEmpty)
-                  SliverPadding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                    sliver: SliverToBoxAdapter(
-                      child: Padding(
-                        padding: const EdgeInsets.only(bottom: 20),
-                        child: _InteractionWrapper(
-                          child: _buildFeaturedCard(newsState.newsList.first, isDark),
-                        ),
-                      ),
-                    ),
+                // ── 4. Recent Achievement Spotlight ──
+                const SliverToBoxAdapter(
+                  child: Padding(
+                    padding: EdgeInsets.only(top: 32),
+                    child: AchievementSpotlight(),
                   ),
+                ),
 
-                if (newsState.isLoading)
-                  SliverToBoxAdapter(
-                    child: Padding(
-                      padding: const EdgeInsets.all(20),
-                      child: MainShimmer.single(height: 250),
-                    ),
-                  ),
-
-                // 5. Side News List
+                // ── 5. News Section Header ──
                 SliverPadding(
-                   padding: const EdgeInsets.symmetric(horizontal: 20),
-                  sliver: SliverList(
-                    delegate: SliverChildBuilderDelegate(
-                      (context, index) {
-                        if (index == 0 && newsState.newsList.isNotEmpty) {
-                          return const SizedBox.shrink();
-                        }
-                        // Adjust index because we skip the first one for featured card
-                        final newsIndex = index;
-                        if (newsIndex >= newsState.newsList.length) {
-                          return newsState.isLoadingMore
-                              ? Padding(
-                                  padding: const EdgeInsets.symmetric(vertical: 16),
-                                  child: MainShimmer.single(height: 80),
-                                )
-                              : const SizedBox.shrink();
-                        }
-                        return _InteractionWrapper(
-                          child: _buildSmallNewsItem(newsState.newsList[newsIndex], isDark),
-                        );
-                      },
-                      childCount: newsState.newsList.length,
+                  padding: const EdgeInsets.fromLTRB(24, 32, 24, 16),
+                  sliver: SliverToBoxAdapter(
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        MainText(
+                          'أخبار النادي',
+                          fontSize: 22,
+                          fontWeight: FontWeight.w900,
+                          color: isDark ? Colors.white : Colors.black87,
+                        ),
+                      ],
                     ),
                   ),
                 ),
-                const SliverToBoxAdapter(
-                  child: SizedBox(height: 40),
+
+                // ── 6. Horizontal News Carousel ──
+                SliverToBoxAdapter(
+                  child: SizedBox(
+                    height: 400,
+                    child: newsState.isLoading
+                        ? Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 24),
+                            child: MainShimmer.single(height: 400),
+                          )
+                        : ListView.builder(
+                            scrollDirection: Axis.horizontal,
+                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            itemCount: newsState.newsList.length,
+                            itemBuilder: (context, index) {
+                              return Padding(
+                                padding: const EdgeInsets.symmetric(horizontal: 8),
+                                child: _buildLargeNewsCard(
+                                    newsState.newsList[index], isDark),
+                              );
+                            },
+                          ),
+                  ),
                 ),
 
-                // 8. Motivation Card
-                const SliverToBoxAdapter(
-                  child: MotivationCard(),
-                ),
+                const SliverToBoxAdapter(child: SizedBox(height: 40)),
 
-                const SliverToBoxAdapter(
-                  child: SizedBox(height: 100),
-                ),
+                // ── 8. Motivation Card ──
+                const SliverToBoxAdapter(child: MotivationCard()),
+
+                const SliverToBoxAdapter(child: SizedBox(height: 100)),
               ],
             ),
           );
@@ -345,70 +325,84 @@ class _HomePageState extends ConsumerState<HomePage> {
     );
   }
 
-  Widget _buildFeaturedCard(NewsModel news, bool isDark) {
+  Widget _buildLargeNewsCard(NewsModel news, bool isDark, {bool isFeatured = false}) {
+    final bool hasImage = news.imageUrl != null && news.imageUrl!.isNotEmpty;
     final type = news.type?.toLowerCase() ?? '';
-    final isWarning = type == 'warning' || 
-                      type == 'تنبيه مهم' || 
-                      type == 'تنلبه مهم' || 
-                      type == 'تعديل جدول';
+    final isWarning = type == 'warning' ||
+        type == 'تنبيه مهم' ||
+        type == 'تنلبه مهم' ||
+        type == 'تعديل جدول';
 
     return Container(
-      width: double.infinity,
+      width: isFeatured ? double.infinity : 320,
+      margin: EdgeInsets.only(bottom: isFeatured ? 0 : 12),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
-        borderRadius: BorderRadius.circular(24),
+        color: isDark ? AppColors.darkSurface : Colors.white,
+        borderRadius: BorderRadius.circular(36),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.06),
+            color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.08),
             blurRadius: 20,
             offset: const Offset(0, 10),
           ),
         ],
       ),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(36),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            if (news.imageUrl != null && news.imageUrl!.isNotEmpty)
+            // ── Image Section ──
+            if (hasImage)
               Stack(
                 children: [
                   CachedNetworkImage(
                     imageUrl: news.imageUrl!,
-                    height: 220,
+                    height: 180,
                     width: double.infinity,
                     fit: BoxFit.cover,
-                    placeholder: (context, url) => Container(
-                      height: 220,
-                      color: Colors.grey[200],
-                      child: const Center(child: CircularProgressIndicator()),
-                    ),
-                    errorWidget: (context, url, error) => Container(
-                      height: 220,
-                      color: Colors.grey[200],
-                      child: const Icon(Icons.error),
+                  ),
+                  // Heart Overlay (Top Left)
+                  Positioned(
+                    top: 14,
+                    left: 14,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: isDark ? AppColors.darkSurface : Colors.white,
+                        borderRadius: BorderRadius.circular(20),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.1),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: _buildLikeButton(news, isSmall: true),
                     ),
                   ),
+                  // Warning Badge Overlay if featured
                   if (isWarning)
                     Positioned(
-                      top: 16,
-                      right: 16,
+                      top: 14,
+                      right: 14,
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                         decoration: BoxDecoration(
-                          color: AppColors.primaryColor,
+                          color: isDark ? AppColors.darkBackground.withValues(alpha: 0.9) : Colors.white.withOpacity(0.9),
                           borderRadius: BorderRadius.circular(20),
                         ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            const Icon(Icons.warning_amber_rounded, color: Colors.white, size: 16),
+                            const Icon(Icons.warning_amber_rounded, color: AppColors.primaryCrimson, size: 14),
                             const SizedBox(width: 4),
                             MainText(
-                              type == 'تعديل جدول' ? 'تعديل جدول' : 'تنبيه',
-                              fontSize: 12,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
+                              news.type ?? 'تنبيه مهم',
+                              fontSize: 10,
+                              fontWeight: FontWeight.w900,
+                              color: AppColors.primaryCrimson,
                             ),
                           ],
                         ),
@@ -416,111 +410,35 @@ class _HomePageState extends ConsumerState<HomePage> {
                     ),
                 ],
               ),
+
+            // ── Content Section ──
             Padding(
               padding: const EdgeInsets.all(20),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  // Category/Type (if not warning)
+                  if (!isWarning || !hasImage)
+                    MainText(
+                      news.type ?? 'مسابقات',
+                      color: AppColors.primaryCrimson,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  if (!isWarning || !hasImage) const SizedBox(height: 8),
+                  // Title
                   MainText(
                     news.title,
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
+                    fontSize: 20,
+                    fontWeight: FontWeight.w900,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
+                    height: 1.3,
+                    color: isDark ? Colors.white : Colors.black87,
                   ),
-                  const SizedBox(height: 8),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Expanded(
-                        child: MainText(
-                          news.newsContent,
-                          fontSize: 14,
-                          color: Colors.grey[600],
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      _buildLikeButton(news),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildUpcomingTraining(WidgetRef ref, bool isDark) {
-    return const TrainingCountdown();
-  }
-
-
-  Widget _buildSmallNewsItem(NewsModel news, bool isDark) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 20),
-      child: Container(
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.02),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
-        child: Row(
-          children: [
-            if (news.imageUrl != null && news.imageUrl!.isNotEmpty)
-              ClipRRect(
-                borderRadius: BorderRadius.circular(12),
-                child: CachedNetworkImage(
-                  imageUrl: news.imageUrl!,
-                  width: 80,
-                  height: 80,
-                  fit: BoxFit.cover,
-                ),
-              )
-            else
-              Container(
-                width: 80,
-                height: 80,
-                decoration: BoxDecoration(
-                  color: Colors.grey[200],
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: const Icon(Icons.newspaper, color: Colors.grey),
-              ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  MainText(
-                    news.title,
-                    fontSize: 15,
-                    fontWeight: FontWeight.bold,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 8),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      MainText(
-                        DateConverter.timeAgoSinceDate(news.publishDate),
-                        fontSize: 12,
-                        color: Colors.grey,
-                      ),
-                      _buildLikeButton(news, isSmall: true),
-                    ],
-                  ),
+                  const SizedBox(height: 12),
+                  // Snippet + Read More
+                  _ExpandedText(text: news.newsContent, isDark: isDark),
                 ],
               ),
             ),
@@ -540,15 +458,65 @@ class _HomePageState extends ConsumerState<HomePage> {
   }
 }
 
-class _InteractionWrapper extends StatefulWidget {
-  final Widget child;
-  const _InteractionWrapper({required this.child});
+// ── Expandable text with "اقرأ المزيد" ──
+class _ExpandedText extends StatefulWidget {
+  final String text;
+  final bool isDark;
+
+  const _ExpandedText({required this.text, required this.isDark});
 
   @override
-  State<_InteractionWrapper> createState() => _InteractionWrapperState();
+  State<_ExpandedText> createState() => _ExpandedTextState();
 }
 
-class _InteractionWrapperState extends State<_InteractionWrapper> with SingleTickerProviderStateMixin {
+class _ExpandedTextState extends State<_ExpandedText> {
+  bool isExpanded = false;
+
+  @override
+  Widget build(BuildContext context) {
+    const int threshold = 120;
+    final isLong = widget.text.length > threshold;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        MainText(
+          isLong && !isExpanded
+              ? '${widget.text.substring(0, threshold)}...'
+              : widget.text,
+          fontSize: 15,
+          color: widget.isDark ? Colors.grey[400] : const Color(0xFF555555),
+          height: 1.6,
+        ),
+        if (isLong)
+          GestureDetector(
+            onTap: () => setState(() => isExpanded = !isExpanded),
+            child: Padding(
+              padding: const EdgeInsets.only(top: 4.0),
+              child: MainText(
+                isExpanded ? 'عرض أقل' : 'اقرأ المزيد',
+                color: AppColors.primaryColor,
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+// ── Tap scale wrapper ──
+class _TapWrapper extends StatefulWidget {
+  final Widget child;
+  const _TapWrapper({required this.child});
+
+  @override
+  State<_TapWrapper> createState() => _TapWrapperState();
+}
+
+class _TapWrapperState extends State<_TapWrapper>
+    with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _scaleAnimation;
 
@@ -576,10 +544,7 @@ class _InteractionWrapperState extends State<_InteractionWrapper> with SingleTic
       onTapDown: (_) => _controller.forward(),
       onTapUp: (_) => _controller.reverse(),
       onTapCancel: () => _controller.reverse(),
-      child: ScaleTransition(
-        scale: _scaleAnimation,
-        child: widget.child,
-      ),
+      child: ScaleTransition(scale: _scaleAnimation, child: widget.child),
     );
   }
 }

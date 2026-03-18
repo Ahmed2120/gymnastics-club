@@ -8,6 +8,7 @@ import '../auth_provider.dart';
 import '../../../core/costants/app_icons.dart';
 import '../../../widgets/custom_button.dart';
 import '../../../widgets/main_text.dart';
+import '../../../widgets/custom_back_button.dart';
 
 class ForgetPasswordScreen extends ConsumerStatefulWidget {
   const ForgetPasswordScreen({super.key});
@@ -40,31 +41,56 @@ class _ForgetPasswordScreenState extends ConsumerState<ForgetPasswordScreen> {
     final authNotifier = ref.read(authProvider.notifier);
 
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
         title: const MainText('نسيت كلمة المرور', fontWeight: FontWeight.bold),
         centerTitle: true,
+        backgroundColor: Colors.white,
+        elevation: 0,
+        leading: const CustomBackButton(),
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24.0),
+        padding: const EdgeInsets.symmetric(horizontal: 32.0, vertical: 24.0),
         child: Column(
           children: [
-            Image.asset(AppIcons.logo, height: 120),
-            32.ph,
+            // Premium Logo Container (Matched with Login)
+            Container(
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.red.withOpacity(0.08),
+                    blurRadius: 40,
+                    spreadRadius: 8,
+                  ),
+                ],
+              ),
+              child: Image.asset(
+                AppIcons.logo,
+                height: 140,
+                fit: BoxFit.contain,
+              ),
+            ),
+            40.ph,
             if (!_isOtpSent) ...[
               const MainText(
                 'أدخل رقم الهاتف المسجل لإرسال رمز التحقق',
                 fontSize: 14,
                 textAlign: TextAlign.center,
+                color: Colors.grey,
               ),
-              24.ph,
+              32.ph,
               MainTextField(
                 controller: _phoneController,
                 hint: 'رقم الهاتف',
                 keyboardType: TextInputType.phone,
+                prefixIcon: const Icon(Icons.phone_android_rounded, color: Colors.grey),
               ),
-              24.ph,
+              32.ph,
               PrimaryButton(
                 text: authState.isLoading ? 'جاري الإرسال...' : 'إرسال الرمز',
+                borderRadius: 24,
+                padding: const EdgeInsets.symmetric(vertical: 16),
                 onPressed: authState.isLoading
                     ? null
                     : () async {
@@ -83,30 +109,36 @@ class _ForgetPasswordScreenState extends ConsumerState<ForgetPasswordScreen> {
                 'أدخل رمز التحقق وكلمة المرور الجديدة',
                 fontSize: 14,
                 textAlign: TextAlign.center,
+                color: Colors.grey,
               ),
-              24.ph,
+              32.ph,
               MainTextField(
                 controller: _otpController,
                 hint: 'رمز التحقق (OTP)',
                 keyboardType: TextInputType.number,
+                prefixIcon: const Icon(Icons.pin_rounded, color: Colors.grey),
               ),
               16.ph,
               MainTextField(
                 controller: _passwordController,
                 hint: 'كلمة المرور الجديدة',
                 isPassword: true,
+                prefixIcon: const Icon(Icons.lock_outline_rounded, color: Colors.grey),
               ),
               16.ph,
               MainTextField(
                 controller: _confirmPasswordController,
                 hint: 'تأكيد كلمة المرور',
                 isPassword: true,
+                prefixIcon: const Icon(Icons.lock_reset_rounded, color: Colors.grey),
               ),
-              24.ph,
+              32.ph,
               PrimaryButton(
                 text: authState.isLoading
                     ? 'جاري التحديث...'
                     : 'تحديث كلمة المرور',
+                borderRadius: 24,
+                padding: const EdgeInsets.symmetric(vertical: 16),
                 onPressed: authState.isLoading
                     ? null
                     : () async {
@@ -138,11 +170,12 @@ class _ForgetPasswordScreenState extends ConsumerState<ForgetPasswordScreen> {
               ),
             ],
             if (authState.errorMessage != null) ...[
-              16.ph,
+              24.ph,
               MainText(
                 authState.errorMessage!,
                 color: Colors.red,
                 fontSize: 14,
+                textAlign: TextAlign.center,
               ),
             ],
           ],

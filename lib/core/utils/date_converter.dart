@@ -237,6 +237,7 @@ class DateConverter {
             23,
             59,
             59,
+            240,
           );
     DateTime startTime = DateTime(
       currentTime.year,
@@ -430,5 +431,27 @@ class DateConverter {
       return (numericDates) ? '1 year ago' : 'Last year';
     }
     return ' منذ ${(difference.inDays / 365).floor()} سنين';
+  }
+
+  static int getWeekdayFromArabic(String day) {
+    switch (day.trim()) {
+      case 'الاثنين':
+        return 1;
+      case 'الثلاثاء':
+        return 2;
+      case 'الأربعاء':
+        return 3;
+      case 'الخميس':
+        return 4;
+      case 'الجمعة':
+        return 5;
+      case 'السبت':
+        return 6;
+      case 'الأحد':
+      case 'الاحد':
+        return 7;
+      default:
+        return 1;
+    }
   }
 }

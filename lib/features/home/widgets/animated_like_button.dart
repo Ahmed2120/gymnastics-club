@@ -130,15 +130,17 @@ class _AnimatedLikeButtonState extends State<AnimatedLikeButton> with TickerProv
                   color: widget.isLiked ? AppColors.primaryColor : Colors.grey,
                   size: iconSize,
                 ),
-                const SizedBox(width: 6),
-                Text(
-                  widget.likesCount.toString(),
-                  style: TextStyle(
-                    fontSize: widget.isSmall ? 12 : 14,
-                    color: widget.isLiked ? AppColors.primaryColor : Colors.grey,
-                    fontWeight: widget.isLiked ? FontWeight.bold : FontWeight.normal,
+                if (widget.likesCount > 0) ...[
+                  const SizedBox(width: 6),
+                  Text(
+                    widget.likesCount.toString(),
+                    style: TextStyle(
+                      fontSize: widget.isSmall ? 12 : 14,
+                      color: widget.isLiked ? AppColors.primaryColor : Colors.grey,
+                      fontWeight: widget.isLiked ? FontWeight.bold : FontWeight.normal,
+                    ),
                   ),
-                ),
+                ],
               ],
             ),
           ),

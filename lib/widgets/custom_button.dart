@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../core/theme/app_colors.dart';
 
 class CustomButton extends StatelessWidget {
   final String? text;
@@ -38,7 +39,7 @@ class CustomButton extends StatelessWidget {
     this.height,
     this.padding,
     this.margin,
-    this.borderRadius = 8.0,
+    this.borderRadius = 100,
     this.textStyle,
     this.isLoading = false,
     this.loadingWidget,
@@ -103,9 +104,9 @@ class CustomButton extends StatelessWidget {
 
     final buttonContent = Container(
       width: width,
-      height: height ?? 50,
+      height: height ?? 56,
       alignment: alignment ?? Alignment.center,
-      padding: padding ?? const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+      padding: padding ?? const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
       decoration: BoxDecoration(
         color: gradient == null
             ? (isDisabled
@@ -115,7 +116,15 @@ class CustomButton extends StatelessWidget {
         gradient: !isDisabled ? gradient : null,
         borderRadius: BorderRadius.circular(borderRadius),
         border: borderSide != null ? Border.fromBorderSide(borderSide!) : null,
-        boxShadow: !isDisabled && boxShadow != null ? boxShadow : null,
+        boxShadow: !isDisabled
+            ? (boxShadow ?? [
+                BoxShadow(
+                  color: (backgroundColor ?? theme.primaryColor).withValues(alpha: 0.15),
+                  blurRadius: 12,
+                  offset: const Offset(0, 4),
+                ),
+              ])
+            : null,
       ),
       child: buttonChild,
     );
@@ -124,7 +133,7 @@ class CustomButton extends StatelessWidget {
       margin: margin,
       child: Material(
         color: Colors.transparent,
-        elevation: !isDisabled && elevation != null ? elevation! : 0,
+        elevation: 0,
         borderRadius: BorderRadius.circular(borderRadius),
         child: InkWell(
           onTap: isDisabled ? null : onPressed,
@@ -145,6 +154,7 @@ class PrimaryButton extends StatelessWidget {
   final Widget? suffixIcon;
   final double borderRadius;
   final double? width;
+  final EdgeInsetsGeometry? padding;
 
   const PrimaryButton({
     super.key,
@@ -153,8 +163,9 @@ class PrimaryButton extends StatelessWidget {
     this.isLoading = false,
     this.prefixIcon,
     this.suffixIcon,
-    this.borderRadius = 8,
+    this.borderRadius = 100,
     this.width,
+    this.padding,
   });
 
   @override
@@ -167,16 +178,17 @@ class PrimaryButton extends StatelessWidget {
       suffixIcon: suffixIcon,
       width: width,
       borderRadius: borderRadius,
-      backgroundColor: Theme.of(context).primaryColor,
+      backgroundColor: AppColors.primaryCrimson,
       textColor: Colors.white,
+      padding: padding,
       gradient: const LinearGradient(
-      begin: Alignment.topLeft,
-      end: Alignment.bottomRight,
-      colors: [
-        Color(0xFF667eea),
-        Color(0xFF764ba2),
-      ],
-    ),
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: [
+          AppColors.energyGradientStart,
+          AppColors.energyGradientEnd,
+        ],
+      ),
     );
   }
 }

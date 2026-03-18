@@ -1,6 +1,14 @@
-# Features Log
+# Project Features Log
 
 This file tracks all features added, edited, or removed in the Gymnastics Club project.
+
+## [2024-03-16] Achievement Spotlight Visual Update
+- Updated theme to match user's image: White background card with a subtle Gold border.
+- Corrected text colors: Dark Blue for titles, Gold/Brown for rank, and Muted Grey for date.
+- Adjusted layout: Positioned yellow star icon before the "أحدث الإنجازات" title.
+- Implemented a gold/yellow rounded square container for the trophy icon.
+- Restored and themed the sparkle animations to match the gold aesthetic.
+- Removed crimson-specific background patterns to maintain focus on the new aesthetic.
 
 ## Achievements Page Overhaul (2026-03-15)
 - **Feature**: Hero HUD Header

@@ -17,13 +17,15 @@ class TrainingCountdown extends ConsumerStatefulWidget {
 
 class _TrainingCountdownState extends ConsumerState<TrainingCountdown> {
   Timer? _timer;
-  String _countdownText = '';
+  ScheduleModel? _nextSessionModel;
+  bool _isToday = false;
+  String _hoursText = '00';
+  String _minutesText = '00';
 
   @override
   void initState() {
     super.initState();
     _startTimer();
-    // Initial calculation
     WidgetsBinding.instance.addPostFrameCallback((_) => _updateCountdown());
   }
 
@@ -35,89 +37,70 @@ class _TrainingCountdownState extends ConsumerState<TrainingCountdown> {
 
   void _startTimer() {
     _timer = Timer.periodic(const Duration(minutes: 1), (timer) {
-      if (mounted) {
-        _updateCountdown();
-      }
+      if (mounted) _updateCountdown();
     });
   }
 
   void _updateCountdown() {
-    final scheduleState = ref.read(scheduleRiverpod);
-    if (scheduleState.scheduleList.isEmpty) {
-      if (_countdownText != '') setState(() => _countdownText = '');
-      return;
-    }
+    final scheduleList = ref.read(scheduleRiverpod).scheduleList;
+    if (scheduleList.isEmpty) return;
 
-    final nextSession = _getNextSession(scheduleState.scheduleList);
-    if (nextSession == null) {
-      if (_countdownText != '') setState(() => _countdownText = '');
-      return;
-    }
+    final next = _getNextSessionData(scheduleList);
+    if (next == null) return;
 
     final now = DateTime.now();
-    final difference = nextSession.difference(now);
+    final nextDate = next.dateTime;
+    
+    // Check if it's today
+    final bool isToday = nextDate.year == now.year && 
+                         nextDate.month == now.month && 
+                         nextDate.day == now.day;
 
-    String newText;
-    if (difference.isNegative) {
-      newText = 'بدأ التدريب الآن';
-    } else {
-      final hours = difference.inHours;
-      final minutes = difference.inMinutes % 60;
+    final difference = nextDate.difference(now);
+    
+    setState(() {
+      _nextSessionModel = next.model;
+      _isToday = isToday;
       
-      newText = 'يبدأ خلال ';
-      if (hours > 0) newText += '$hours ساعة و ';
-      newText += '$minutes دقيقة';
-    }
-
-    if (_countdownText != newText) {
-      setState(() => _countdownText = newText);
-    }
+      if (!difference.isNegative) {
+        final hours = difference.inHours;
+        final minutes = difference.inMinutes % 60;
+        _hoursText = hours.toString().padLeft(2, '0');
+        _minutesText = minutes.toString().padLeft(2, '0');
+      } else {
+        _hoursText = '00';
+        _minutesText = '00';
+      }
+    });
   }
 
-  DateTime? _getNextSession(List<ScheduleModel> schedules) {
+  _SessionData? _getNextSessionData(List<ScheduleModel> schedules) {
     if (schedules.isEmpty) return null;
-
     final now = DateTime.now();
-    List<DateTime> upcomingDates = [];
+    List<_SessionData> upcoming = [];
 
     for (var session in schedules) {
       final tod = DateConverter.parseTimeToTimeOfDay(session.startTime);
       if (tod == null) continue;
-
-      final weekday = _getDayNumber(session.day);
+      final weekday = DateConverter.getWeekdayFromArabic(session.day);
       
-      // Find the next occurrence of this weekday
-      DateTime scheduledDate = DateTime(now.year, now.month, now.day, tod.hour, tod.minute);
+      DateTime scheduledDate = DateTime(
+          now.year, now.month, now.day, tod.hour, tod.minute);
+      
       int daysUntil = (weekday - now.weekday + 7) % 7;
       
-      if (daysUntil == 0) {
-        // It's today. Check if time has passed
-        if (scheduledDate.isBefore(now)) {
-          daysUntil = 7; // Next week
-        }
+      // If today but time has passed, move to next week
+      if (daysUntil == 0 && scheduledDate.isBefore(now)) {
+        daysUntil = 7;
       }
       
       scheduledDate = scheduledDate.add(Duration(days: daysUntil));
-      upcomingDates.add(scheduledDate);
+      upcoming.add(_SessionData(dateTime: scheduledDate, model: session));
     }
 
-    if (upcomingDates.isEmpty) return null;
-    upcomingDates.sort();
-    return upcomingDates.first;
-  }
-
-  int _getDayNumber(String day) {
-    switch (day.trim()) {
-      case 'الاثنين': return 1;
-      case 'الثلاثاء': return 2;
-      case 'الأربعاء': return 3;
-      case 'الخميس': return 4;
-      case 'الجمعة': return 5;
-      case 'السبت': return 6;
-      case 'الأحد': 
-      case 'الاحد': return 7;
-      default: return 1;
-    }
+    if (upcoming.isEmpty) return null;
+    upcoming.sort((a, b) => a.dateTime.compareTo(b.dateTime));
+    return upcoming.first;
   }
 
   @override
@@ -125,84 +108,136 @@ class _TrainingCountdownState extends ConsumerState<TrainingCountdown> {
     final scheduleState = ref.watch(scheduleRiverpod);
     final childState = ref.watch(childRiverpod);
     final user = childState.selectedChild;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
 
-    // Trigger update when schedule changes
-    ref.listen(scheduleRiverpod, (previous, next) {
-      _updateCountdown();
-    });
+    ref.listen(scheduleRiverpod, (previous, next) => _updateCountdown());
 
     if (scheduleState.scheduleList.isEmpty) {
-      return Container(
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
-          borderRadius: BorderRadius.circular(20),
-        ),
-        child: const Center(child: MainText('لا يوجد تدريبات حالياً')),
-      );
+      return const SizedBox.shrink();
     }
 
-    final session = scheduleState.scheduleList.first;
-
-    return Row(
-      children: [
-        Expanded(
-          child: _buildActivityCard(
-            'التدريب القادم',
-            _countdownText.isNotEmpty ? _countdownText : '${session.day} ${session.startTime}',
-            Icons.run_circle_outlined,
-            isDark,
-          ),
-        ),
-        const SizedBox(width: 16),
-        Expanded(
-          child: _buildActivityCard(
-            'المجموعة',
-            user?.groupName ?? 'مجموعة غير محددة',
-            Icons.groups_outlined,
-            isDark,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildActivityCard(String title, String subtitle, IconData icon, bool isDark) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      width: double.infinity,
+      padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
-        borderRadius: BorderRadius.circular(20),
+        color: isDark ? AppColors.darkSurface : const Color(0xFF10141D),
+        borderRadius: BorderRadius.circular(40),
+        border: isDark ? Border.all(color: Colors.white.withOpacity(0.05), width: 1.5) : null,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.02),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
+            color: Colors.black.withOpacity(isDark ? 0.4 : 0.2),
+            blurRadius: 30,
+            spreadRadius: -5,
+            offset: const Offset(0, 15),
           ),
         ],
       ),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, color: AppColors.primaryColor, size: 30),
-          const SizedBox(height: 12),
-          MainText(
-            title,
-            fontSize: 14,
-            fontWeight: FontWeight.bold,
-            textAlign: TextAlign.center,
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                decoration: BoxDecoration(
+                  color: AppColors.primaryCrimson.withOpacity(0.12),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: MainText(
+                  'التدريب القادم',
+                  color: AppColors.primaryCrimson,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.08),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.sports_gymnastics,
+                  color: Colors.white,
+                  size: 24,
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 4),
+
+          const SizedBox(height: 12),
+
           MainText(
-            subtitle,
-            fontSize: 11,
-            color: Colors.grey,
-            textAlign: TextAlign.center,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
+            user?.groupName ?? '',
+            color: Colors.white,
+            fontSize: 32,
+            fontWeight: FontWeight.w900,
+          ),
+
+          const SizedBox(height: 24),
+
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              MainText(
+                _isToday ? 'يبدأ التدريب خلال' : 'موعد التدريب القادم',
+                color: Colors.white.withOpacity(0.5),
+                fontSize: 13,
+                fontWeight: FontWeight.w500,
+              ),
+              const SizedBox(height: 4),
+              if (_isToday)
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.baseline,
+                  textBaseline: TextBaseline.alphabetic,
+                  children: [
+                    MainText(
+                      _minutesText,
+                      color: Colors.white,
+                      fontSize: 48,
+                      fontWeight: FontWeight.w900,
+                    ),
+                    const SizedBox(width: 4),
+                    const MainText(
+                      ':',
+                      color: Colors.white,
+                      fontSize: 38,
+                      fontWeight: FontWeight.w900,
+                    ),
+                    const SizedBox(width: 4),
+                    MainText(
+                      _hoursText,
+                      color: Colors.white,
+                      fontSize: 48,
+                      fontWeight: FontWeight.w900,
+                    ),
+                    const SizedBox(width: 8),
+                    MainText(
+                      'ساعة',
+                      color: Colors.white.withOpacity(0.7),
+                      fontSize: 16,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ],
+                )
+              else
+                MainText(
+                  '${_nextSessionModel?.day ?? ''} - ${_nextSessionModel?.startTime ?? ''}',
+                  color: Colors.white,
+                  fontSize: 28,
+                  fontWeight: FontWeight.w900,
+                ),
+            ],
           ),
         ],
       ),
     );
   }
+}
+
+class _SessionData {
+  final DateTime dateTime;
+  final ScheduleModel model;
+  _SessionData({required this.dateTime, required this.model});
 }

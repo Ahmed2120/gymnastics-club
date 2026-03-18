@@ -1,13 +1,15 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:gymnastics_club/core/theme/app_colors.dart';
 import 'package:gymnastics_club/core/utils/extensions/size_extensions.dart';
+import 'package:gymnastics_club/data/models/models/attendance_model.dart';
 import 'package:gymnastics_club/features/profile/profile_controller/attendance_riverpod.dart';
 import 'package:gymnastics_club/features/profile/profile_controller/child_riverpod.dart';
 import 'package:gymnastics_club/widgets/main_text.dart';
 import '../widgets/shimmer_widgets.dart';
+
+import '../widgets/custom_back_button.dart';
 
 class AttendanceAndAbsenceScreen extends ConsumerStatefulWidget {
   const AttendanceAndAbsenceScreen({Key? key}) : super(key: key);
@@ -72,7 +74,6 @@ class _AttendanceAndAbsenceScreenState
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final colorScheme = Theme.of(context).colorScheme;
 
     ref.listen(childRiverpod, (previous, next) {
       if (previous?.selectedChild?.id != next.selectedChild?.id) {
@@ -83,36 +84,57 @@ class _AttendanceAndAbsenceScreenState
     final attendanceState = ref.watch(attendanceRiverpod);
     final attendance = attendanceState.attendanceList;
 
-    // Sort and build day data
     final sortedAttendance = [...attendance]
       ..sort((a, b) => (a.date ?? DateTime(0)).compareTo(b.date ?? DateTime(0)));
 
-    final days = sortedAttendance
-        .where((e) => e.date != null)
-        .map((e) => DayData(
-              number: e.date!.day,
-              color: (e.didAttend ?? false) ? Colors.green : Colors.red,
-              status: (e.didAttend ?? false) ? DayStatus.completed : DayStatus.missed,
-            ))
+    // Show only a single month (latest available, otherwise current) so older
+    // pages loaded by pagination don't pollute the calendar grid.
+    final DateTime monthToDisplay;
+    final latestDate = sortedAttendance
+        .map((e) => e.date)
+        .whereType<DateTime>()
+        .fold<DateTime?>(null, (prev, next) {
+      if (prev == null) return next;
+      return next.isAfter(prev) ? next : prev;
+    });
+    monthToDisplay = latestDate ?? DateTime.now();
+
+    final monthAttendance = sortedAttendance
+        .where((e) =>
+            e.date != null &&
+            e.date!.year == monthToDisplay.year &&
+            e.date!.month == monthToDisplay.month)
         .toList();
 
-    // Add upcoming days
-    final now = DateTime.now();
-    DateTime lastDay = now;
-    if (sortedAttendance.isNotEmpty) {
-      final validDates = sortedAttendance.map((e) => e.date).whereType<DateTime>();
-      if (validDates.isNotEmpty) {
-        lastDay = validDates.reduce((a, b) => a.isAfter(b) ? a : b);
+    // Build a map for quick lookup by day.
+    final Map<int, AttendanceModel> dayMap = {
+      for (final item in monthAttendance) item.date!.day: item
+    };
+
+    final endOfMonth = DateTime(monthToDisplay.year, monthToDisplay.month + 1, 0);
+    final List<DayData> days = [];
+
+    // Render the full month so there are no visual gaps (e.g., missing 11–15).
+    for (int day = 1; day <= endOfMonth.day; day++) {
+      final record = dayMap[day];
+      if (record != null) {
+        final attended = record.didAttend ?? false;
+        days.add(DayData(
+          number: day,
+          color: attended ? const Color(0xFF16A34A) : AppColors.primaryCrimson,
+          status: attended ? DayStatus.completed : DayStatus.missed,
+        ));
+      } else {
+        // No record; show as neutral upcoming/placeholder.
+        days.add(DayData(
+          number: day,
+          color: isDark ? Colors.white.withOpacity(0.05) : Colors.grey.shade200,
+          status: DayStatus.upcoming,
+        ));
       }
     }
-    for (int i = 1; i <= 5; i++) {
-      final upcomingDate = lastDay.add(Duration(days: i));
-      days.add(DayData(
-        number: upcomingDate.day,
-        color: colorScheme.surfaceVariant,
-        status: DayStatus.upcoming,
-      ));
-    }
+
+    final displayMonth = monthToDisplay;
 
     final totalDays = attendance.length;
     final attendedDays = attendance.where((e) => e.didAttend ?? false).length;
@@ -121,90 +143,69 @@ class _AttendanceAndAbsenceScreenState
         totalDays > 0 ? (attendedDays / totalDays * 100).toInt() : 0;
 
     return Scaffold(
-      backgroundColor: isDark ? const Color(0xFF121212) : const Color(0xFFF5F6FA),
+      backgroundColor: isDark ? AppColors.darkBackground : const Color(0xFFF5F6FA),
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        centerTitle: true,
+        leading: const CustomBackButton(),
+        title: MainText(
+          'الحضور والغياب',
+          fontSize: 28,
+          fontWeight: FontWeight.bold,
+          color: isDark ? Colors.white : AppColors.lightText,
+        ),
+      ),
       body: Column(
         children: [
-          // ── Curved Header ──────────────────────────────────────────────────
           FadeTransition(
             opacity: _headerFade,
             child: SlideTransition(
               position: _headerSlide,
-              child: Container(
-                width: double.infinity,
-                decoration: const BoxDecoration(
-                  color: AppColors.primaryColor,
-                  borderRadius: BorderRadius.only(
-                    bottomLeft: Radius.circular(40),
-                    bottomRight: Radius.circular(40),
-                  ),
-                ),
-                child: SafeArea(
-                  bottom: false,
-                  child: Column(
-                    children: [
-                      // Top row: back + title
-                      Padding(
-                        padding: const EdgeInsets.fromLTRB(8, 8, 8, 0),
+              child: (!attendanceState.isLoading && totalDays > 0)
+                  ? Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 24, vertical: 12),
+                        decoration: BoxDecoration(
+                          color: isDark ? AppColors.darkSurface : Colors.white,
+                          borderRadius: BorderRadius.circular(30),
+                          border: Border.all(
+                            color: isDark ? Colors.white.withOpacity(0.05) : const Color(0xFFE5E5E5),
+                            width: 1.5,
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.05),
+                              blurRadius: 10,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
                         child: Row(
+                          mainAxisSize: MainAxisSize.min,
                           children: [
-                            IconButton(
-                              icon: const Icon(Icons.arrow_back_rounded,
-                                  color: Colors.white),
-                              onPressed: () => context.pop(),
+                            const Icon(Icons.analytics_rounded,
+                                color: AppColors.primaryCrimson, size: 20),
+                            const SizedBox(width: 10),
+                            MainText(
+                              'نسبة الحضور: $attendancePercentage%',
+                              color: isDark ? Colors.white : Colors.black87,
+                              fontSize: 15,
+                              fontWeight: FontWeight.w900,
                             ),
-                            const Expanded(
-                              child: MainText(
-                                'الحضور والغياب',
-                                color: Colors.white,
-                                fontSize: 20,
-                                fontWeight: FontWeight.bold,
-                                textAlign: TextAlign.center,
-                              ),
-                            ),
-                            const SizedBox(width: 48),
                           ],
                         ),
                       ),
-                      const SizedBox(height: 12),
-
-                      // Attendance rate pill (big highlight)
-                      if (!attendanceState.isLoading && totalDays > 0) ...[
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 24, vertical: 10),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.15),
-                            borderRadius: BorderRadius.circular(30),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              const Icon(Icons.pie_chart_rounded,
-                                  color: Colors.white70, size: 18),
-                              const SizedBox(width: 8),
-                              MainText(
-                                'نسبة الحضور: $attendancePercentage%',
-                                color: Colors.white,
-                                fontSize: 14,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                      ] else
-                        const SizedBox(height: 12),
-                    ],
-                  ),
-                ),
-              ),
+                    )
+                  : const SizedBox.shrink(),
             ),
           ),
 
-          // ── Body ────────────────────────────────────────────────────────────
           Expanded(
             child: RefreshIndicator(
-              color: AppColors.primaryColor,
+              color: AppColors.primaryCrimson,
               onRefresh: () async => _fetchData(),
               child: attendanceState.isLoading
                   ? _buildShimmerLoading()
@@ -217,12 +218,13 @@ class _AttendanceAndAbsenceScreenState
                               child: Column(
                                 children: [
                                   Icon(Icons.event_busy_rounded,
-                                      size: 72, color: Colors.grey[300]),
-                                  const SizedBox(height: 16),
-                                  const MainText(
+                                      size: 80, color: isDark ? Colors.white.withOpacity(0.05) : Colors.grey[200]),
+                                  const SizedBox(height: 24),
+                                  MainText(
                                     'لا توجد بيانات حضور لهذا اللاعب',
-                                    color: Colors.grey,
+                                    color: isDark ? Colors.white24 : Colors.grey,
                                     fontSize: 16,
+                                    fontWeight: FontWeight.w700,
                                   ),
                                 ],
                               ),
@@ -231,83 +233,82 @@ class _AttendanceAndAbsenceScreenState
                         )
                       : SingleChildScrollView(
                           controller: _scrollController,
-                          physics: const AlwaysScrollableScrollPhysics(),
-                          padding: const EdgeInsets.fromLTRB(16, 24, 16, 24),
+                          physics: const BouncingScrollPhysics(),
+                          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              // Calendar card
-                              HabitCalendarWidget(days: days),
-                              24.ph,
+                              HabitCalendarWidget(days: days, month: displayMonth),
+                              32.ph,
 
-                              // Stats section label
                               Row(
                                 children: [
                                   Container(
-                                    padding: const EdgeInsets.all(6),
+                                    padding: const EdgeInsets.all(10),
                                     decoration: BoxDecoration(
-                                      color: AppColors.primaryColor
-                                          .withOpacity(0.1),
-                                      borderRadius: BorderRadius.circular(8),
+                                      color: AppColors.primaryCrimson.withOpacity(0.1),
+                                      borderRadius: BorderRadius.circular(14),
                                     ),
                                     child: const Icon(Icons.bar_chart_rounded,
-                                        color: AppColors.primaryColor, size: 20),
+                                        color: AppColors.primaryCrimson, size: 22),
                                   ),
-                                  const SizedBox(width: 10),
-                                  const MainText(
+                                  const SizedBox(width: 14),
+                                  MainText(
                                     'إحصائيات الشهر',
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.bold,
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.w900,
+                                    color: isDark ? Colors.white : Colors.black87,
                                   ),
                                 ],
                               ),
-                              16.ph,
+                              24.ph,
 
-                              // Stats grid
                               GridView.count(
                                 shrinkWrap: true,
                                 physics: const NeverScrollableScrollPhysics(),
                                 crossAxisCount: 2,
-                                crossAxisSpacing: 14,
-                                mainAxisSpacing: 14,
-                                childAspectRatio: 1.5,
+                                crossAxisSpacing: 16,
+                                mainAxisSpacing: 16,
+                                childAspectRatio: 1.15,
                                 children: [
-                                  _buildStatCard(
-                                    value: '$attendancePercentage%',
-                                    label: 'نسبة الحضور',
-                                    icon: Icons.pie_chart_rounded,
-                                    color: const Color(0xFF667EEA),
-                                    isDark: isDark,
-                                  ),
                                   _buildStatCard(
                                     value: totalDays.toString(),
                                     label: 'إجمالي الحصص',
-                                    icon: Icons.event_available_rounded,
-                                    color: const Color(0xFF764BA2),
+                                    icon: Icons.calendar_today_rounded,
+                                    color: const Color(0xFF8B5CF6),
                                     isDark: isDark,
                                   ),
                                   _buildStatCard(
-                                    value: attendedDays.toString(),
-                                    label: 'حضور',
-                                    icon: Icons.check_circle_rounded,
-                                    color: const Color(0xFF16A34A),
+                                    value: '$attendancePercentage%',
+                                    label: 'نسبة الحضور',
+                                    icon: Icons.stars_rounded,
+                                    color: AppColors.primaryCrimson,
                                     isDark: isDark,
                                   ),
                                   _buildStatCard(
                                     value: missedDays.toString(),
-                                    label: 'غياب',
-                                    icon: Icons.cancel_rounded,
-                                    color: const Color(0xFFDC2626),
+                                    label: 'عدد الغياب',
+                                    icon: Icons.cancel,
+                                    color: AppColors.primaryCrimson,
                                     isDark: isDark,
+                                    isColoredBackground: true,
+                                  ),
+                                  _buildStatCard(
+                                    value: attendedDays.toString(),
+                                    label: 'عدد الحضور',
+                                    icon: Icons.check_circle,
+                                    color: const Color(0xFF10B981),
+                                    isDark: isDark,
+                                    isColoredBackground: true,
                                   ),
                                 ],
                               ),
 
                               if (attendanceState.isLoadingMore) ...[
-                                16.ph,
-                                MainShimmer.single(height: 80),
+                                24.ph,
+                                MainShimmer.single(height: 100),
                               ],
-                              const SizedBox(height: 20),
+                              const SizedBox(height: 40),
                             ],
                           ),
                         ),
@@ -320,21 +321,21 @@ class _AttendanceAndAbsenceScreenState
 
   Widget _buildShimmerLoading() {
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(16.0),
+      padding: const EdgeInsets.all(24.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           MainShimmer.calendar(),
+          32.ph,
+          const Skeleton(height: 30, width: 180),
           24.ph,
-          const Skeleton(height: 25, width: 150),
-          16.ph,
           GridView.count(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
             crossAxisCount: 2,
-            crossAxisSpacing: 14,
-            mainAxisSpacing: 14,
-            childAspectRatio: 1.5,
+            crossAxisSpacing: 16,
+            mainAxisSpacing: 16,
+            childAspectRatio: 1.15,
             children: List.generate(4, (index) => MainShimmer.statCard()),
           ),
         ],
@@ -348,53 +349,62 @@ class _AttendanceAndAbsenceScreenState
     required IconData icon,
     required Color color,
     required bool isDark,
+    bool isColoredBackground = false,
   }) {
-    final cardBg = isDark ? const Color(0xFF1E1E1E) : Colors.white;
+    final bgColor = isColoredBackground 
+        ? color.withOpacity(isDark ? 0.15 : 0.05) 
+        : (isDark ? AppColors.darkSurface : Colors.white);
+    
+    final borderColor = isColoredBackground
+        ? color.withOpacity(isDark ? 0.3 : 0.1)
+        : (isDark ? Colors.white.withOpacity(0.05) : Colors.grey.withOpacity(0.1));
+
+    final textColor = isColoredBackground
+        ? color
+        : (isDark ? Colors.white : const Color(0xFF1E293B));
+
+    final labelColor = isColoredBackground
+        ? color.withOpacity(0.8)
+        : (isDark ? Colors.white54 : Colors.grey[500]);
 
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 16),
       decoration: BoxDecoration(
-        color: cardBg,
-        borderRadius: BorderRadius.circular(18),
-        boxShadow: [
+        color: bgColor,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: isColoredBackground ? [] : [
           BoxShadow(
-            color: isDark
-                ? Colors.black.withOpacity(0.3)
-                : color.withOpacity(0.12),
-            blurRadius: 14,
-            offset: const Offset(0, 5),
+            color: Colors.black.withOpacity(isDark ? 0.3 : 0.03),
+            blurRadius: 15,
+            offset: const Offset(0, 8),
           ),
         ],
-        // Subtle top accent
-        border: Border(top: BorderSide(color: color, width: 3)),
+        border: Border.all(color: borderColor, width: 1.5),
       ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Container(
-            padding: const EdgeInsets.all(6),
-            decoration: BoxDecoration(
-              color: color.withOpacity(0.12),
-              borderRadius: BorderRadius.circular(8),
+            padding: isColoredBackground ? EdgeInsets.zero : const EdgeInsets.all(10),
+            decoration: isColoredBackground ? null : BoxDecoration(
+              color: color.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(14),
             ),
-            child: Icon(icon, color: color, size: 20),
+            child: Icon(icon, color: color, size: isColoredBackground ? 32 : 24),
           ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              MainText(
-                value,
-                fontSize: 22,
-                fontWeight: FontWeight.bold,
-                color: color,
-              ),
-              MainText(
-                label,
-                fontSize: 11,
-                color: isDark ? Colors.grey[400] : Colors.grey[600],
-              ),
-            ],
+          const SizedBox(height: 12),
+          MainText(
+            value,
+            fontSize: 22,
+            fontWeight: FontWeight.w900,
+            color: textColor,
+          ),
+          const SizedBox(height: 4),
+          MainText(
+            label,
+            fontSize: 13,
+            fontWeight: FontWeight.w700,
+            color: labelColor,
           ),
         ],
       ),
@@ -402,68 +412,64 @@ class _AttendanceAndAbsenceScreenState
   }
 }
 
-// ─── Habit Calendar Widget ────────────────────────────────────────────────────
-
 class HabitCalendarWidget extends StatelessWidget {
   final List<DayData> days;
-
-  const HabitCalendarWidget({Key? key, required this.days}) : super(key: key);
+  final DateTime month;
+  const HabitCalendarWidget({Key? key, required this.days, required this.month}) : super(key: key);
 
   final List<String> dayNames = const ['س', 'ح', 'ن', 'ث', 'ر', 'خ', 'ج'];
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final cardBg = isDark ? const Color(0xFF1E1E1E) : Colors.white;
-    final now = DateTime.now();
+    final displayMonth = month;
 
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: cardBg,
-        borderRadius: BorderRadius.circular(24),
+        color: isDark ? AppColors.darkSurface : Colors.white,
+        borderRadius: BorderRadius.circular(32),
         boxShadow: [
           BoxShadow(
-            color: isDark
-                ? Colors.black.withOpacity(0.3)
-                : Colors.black.withOpacity(0.05),
-            blurRadius: 20,
-            offset: const Offset(0, 8),
+            color: Colors.black.withOpacity(isDark ? 0.4 : 0.06),
+            blurRadius: 25,
+            offset: const Offset(0, 10),
           ),
         ],
+        border: Border.all(
+          color: isDark ? Colors.white.withOpacity(0.05) : Colors.grey.withOpacity(0.05),
+          width: 1.5,
+        ),
       ),
       child: Column(
         children: [
-          // Header row
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Row(
                 children: [
                   Container(
-                    padding: const EdgeInsets.all(6),
+                    padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: AppColors.primaryColor.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(8),
+                      color: AppColors.primaryCrimson.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(10),
                     ),
-                    child: const Icon(Icons.calendar_month_rounded,
-                        color: AppColors.primaryColor, size: 18),
+                    child: const Icon(Icons.calendar_today_rounded,
+                        color: AppColors.primaryCrimson, size: 20),
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: 12),
                   MainText(
-                    // Show current month name in Arabic
-                    DateFormat('MMMM yyyy', 'ar').format(now),
-                    fontSize: 15,
-                    fontWeight: FontWeight.bold,
+                    DateFormat('MMMM yyyy', 'ar').format(displayMonth),
+                    fontSize: 18,
+                    fontWeight: FontWeight.w900,
+                    color: isDark ? Colors.white : Colors.black87,
                   ),
                 ],
               ),
-              _buildLegend(isDark),
             ],
           ),
-          const SizedBox(height: 16),
-
-          // Day name headers
+          const SizedBox(height: 24),
+          
           GridView.builder(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
@@ -474,32 +480,31 @@ class HabitCalendarWidget extends StatelessWidget {
             ),
             itemCount: 7,
             itemBuilder: (context, index) => Center(
-              child: Text(
+              child: MainText(
                 dayNames[index],
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
-                  color:
-                      (isDark ? Colors.grey[400] : Colors.grey[600]),
-                ),
+                fontSize: 13,
+                fontWeight: FontWeight.w900,
+                color: isDark ? Colors.white24 : Colors.grey[400],
               ),
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 16),
 
-          // Day circles
           GridView.builder(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
             gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: 7,
-              crossAxisSpacing: 8,
-              mainAxisSpacing: 8,
+              crossAxisSpacing: 12,
+              mainAxisSpacing: 12,
               childAspectRatio: 1,
             ),
             itemCount: days.length,
             itemBuilder: (context, index) => DayCircle(day: days[index]),
           ),
+          
+          const SizedBox(height: 24),
+          _buildLegend(isDark),
         ],
       ),
     );
@@ -507,12 +512,13 @@ class HabitCalendarWidget extends StatelessWidget {
 
   Widget _buildLegend(bool isDark) {
     return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        _legendDot(const Color(0xFF16A34A), 'حضور', isDark),
-        const SizedBox(width: 10),
-        _legendDot(const Color(0xFFDC2626), 'غياب', isDark),
-        const SizedBox(width: 10),
-        _legendDot(Colors.grey.shade300, 'قادم', isDark),
+        _legendDot(const Color(0xFF10B981), 'حضور', isDark),
+        const SizedBox(width: 20),
+        _legendDot(AppColors.primaryCrimson, 'غياب', isDark),
+        const SizedBox(width: 20),
+        _legendDot(isDark ? Colors.white.withOpacity(0.08) : Colors.grey.shade100, 'قادم', isDark),
       ],
     );
   }
@@ -521,48 +527,47 @@ class HabitCalendarWidget extends StatelessWidget {
     return Row(
       children: [
         Container(
-          width: 9,
-          height: 9,
+          width: 10,
+          height: 10,
           decoration: BoxDecoration(color: color, shape: BoxShape.circle),
         ),
-        const SizedBox(width: 4),
-        Text(
+        const SizedBox(width: 8),
+        MainText(
           label,
-          style: TextStyle(
-            fontSize: 10,
-            color: isDark ? Colors.grey[400] : Colors.grey[600],
-          ),
+          fontSize: 12,
+          fontWeight: FontWeight.w700,
+          color: isDark ? Colors.white38 : Colors.grey[600],
         ),
       ],
     );
   }
 }
 
-// ─── Day Circle Widget ────────────────────────────────────────────────────────
-
 class DayCircle extends StatelessWidget {
   final DayData day;
-
   const DayCircle({Key? key, required this.day}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     Color bgColor() {
       switch (day.status) {
         case DayStatus.completed:
-          return const Color(0xFF16A34A);
+          return const Color(0xFF10B981);
         case DayStatus.missed:
-          return const Color(0xFFDC2626);
+          return AppColors.primaryCrimson;
         case DayStatus.upcoming:
-          return colorScheme.surfaceVariant;
+          return isDark ? Colors.white.withOpacity(0.05) : Colors.grey.shade100;
       }
     }
 
-    Color textColor() => day.status == DayStatus.upcoming
-        ? colorScheme.onSurfaceVariant
-        : Colors.white;
+    Color textColor() {
+      if (day.status == DayStatus.upcoming) {
+        return isDark ? Colors.white12 : Colors.grey.shade300;
+      }
+      return Colors.white;
+    }
 
     return Container(
       decoration: BoxDecoration(
@@ -573,26 +578,22 @@ class DayCircle extends StatelessWidget {
             : [
                 BoxShadow(
                   color: bgColor().withOpacity(0.35),
-                  blurRadius: 6,
-                  offset: const Offset(0, 3),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
                 ),
               ],
       ),
       child: Center(
-        child: Text(
+        child: MainText(
           day.number.toString(),
-          style: TextStyle(
-            color: textColor(),
-            fontSize: 13,
-            fontWeight: FontWeight.bold,
-          ),
+          color: textColor(),
+          fontSize: 13,
+          fontWeight: FontWeight.w900,
         ),
       ),
     );
   }
 }
-
-// ─── Data Models ──────────────────────────────────────────────────────────────
 
 class DayData {
   final int number;

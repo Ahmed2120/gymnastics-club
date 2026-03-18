@@ -9,243 +9,222 @@ import '../../../core/routing/routes.dart';
 import '../profile_controller/child_riverpod.dart';
 import '../../../core/theme/theme_provider.dart';
 import '../../auth/auth_provider.dart';
-import '../../../core/costants/app_assets.dart';
+import 'package:gymnastics_club/core/utils/extensions/size_extensions.dart';
 
-class ProfilePage extends ConsumerWidget {
+class ProfilePage extends ConsumerStatefulWidget {
   const ProfilePage({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final colorScheme = Theme.of(context).colorScheme;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final cardColor = isDark ? const Color(0xFF1E1E1E) : Colors.white;
+  ConsumerState<ProfilePage> createState() => _ProfilePageState();
+}
 
+class _ProfilePageState extends ConsumerState<ProfilePage> {
+  @override
+  void initState() {
+    super.initState();
+    Future.microtask(() {
+      ref.read(childRiverpod.notifier).getChildren();
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final themeMode = ref.watch(themeProvider);
     final childState = ref.watch(childRiverpod);
     final activeChild = childState.selectedChild;
-    final themeMode = ref.watch(themeProvider);
     final authNotifier = ref.read(authProvider.notifier);
 
-    if (childState.isLoading) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    if (childState.isLoading && childState.childrenList.isEmpty) {
+      return const Scaffold(
+        body: Center(
+            child: CircularProgressIndicator(color: AppColors.primaryCrimson)),
+      );
     }
 
-    if (activeChild == null) {
-      return const Scaffold(
-        body: Center(child: MainText('لا توجد بيانات للاعبين حالياً')),
+    if (activeChild == null && !childState.isLoading) {
+      return Scaffold(
+        backgroundColor: isDark ? AppColors.darkBackground : const Color(0xFFFAFAFA),
+        body: Center(
+          child: MainText(
+            'لا توجد بيانات لاعبين حالياً',
+            color: isDark ? Colors.white70 : Colors.black54,
+          ),
+        ),
       );
     }
 
     return Scaffold(
+      backgroundColor: isDark ? AppColors.darkBackground : const Color(0xFFFAFAFA),
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        centerTitle: true,
+        automaticallyImplyLeading: false,
+        title: MainText(
+          'الملف الشخصي',
+          fontSize: 28,
+          fontWeight: FontWeight.bold,
+          color: isDark ? Colors.white : AppColors.lightText,
+        ),
+      ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.only(bottom: 24),
         child: Column(
           children: [
-            // 1. Curved Gradient Header for Profile
-            Container(
-              width: double.infinity,
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [AppColors.primaryColor, AppColors.primaryDark],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                borderRadius: BorderRadius.only(
-                  bottomLeft: Radius.circular(50),
-                  bottomRight: Radius.circular(50),
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Color(0x33D32F2F),
-                    blurRadius: 25,
-                    offset: Offset(0, 10),
-                  ),
-                ],
-              ),
-              child: SafeArea(
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 20, 20, 40),
-                  child: Column(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(4),
+            // ── Main Profile Header ──
+            Column(
+              children: [
+                24.ph,
+                // Double Bordered Avatar
+                Center(
+                  child: Container(
+                    padding: const EdgeInsets.all(4),
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      gradient: isDark ? AppColors.energyGradient : null,
+                      border: isDark 
+                        ? null 
+                        : Border.all(
+                            color: const Color(0xFFFFD4D4),
+                            width: 4,
+                          ),
+                    ),
+                    child: Container(
+                      padding: EdgeInsets.all(isDark ? 3 : 4),
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: isDark ? AppColors.darkBackground : Colors.white,
+                      ),
+                      child: Container(
+                        padding: const EdgeInsets.all(2),
                         decoration: BoxDecoration(
+                          color: isDark ? AppColors.darkBackground : Colors.white,
                           shape: BoxShape.circle,
-                          border: Border.all(color: Colors.white24, width: 3),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.1),
-                              blurRadius: 15,
-                              spreadRadius: 2,
-                            ),
-                          ],
                         ),
-                        child: CircleAvatar(
-                          radius: 50,
-                          backgroundColor: Colors.white12,
-                          backgroundImage: activeChild.imageUrl != null
-                              ? NetworkImage(activeChild.imageUrl!)
-                              : const AssetImage(AppAssets.userPlaceholder) as ImageProvider,
+                        child: ClipOval(
+                          child: SizedBox(
+                            height: 140,
+                            width: 140,
+                            child: activeChild?.imageUrl != null
+                                ? Image.network(
+                                    activeChild!.imageUrl!,
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (context, error, stackTrace) =>
+                                        Image.asset('assets/images/defualt-user.png', fit: BoxFit.cover),
+                                  )
+                                : Image.asset(
+                                    'assets/images/defualt-user.png',
+                                    fit: BoxFit.cover,
+                                  ),
+                          ),
                         ),
                       ),
-                      const SizedBox(height: 16),
-                      MainText(
-                        activeChild.name,
-                        color: Colors.white,
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                      ),
-                      const SizedBox(height: 12),
-                      Wrap(
-                        spacing: 12,
-                        runSpacing: 10,
-                        alignment: WrapAlignment.center,
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
-                            decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.12),
-                              borderRadius: BorderRadius.circular(20),
-                              border: Border.all(color: Colors.white10),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                const Icon(Icons.star_outline, color: Colors.white70, size: 16),
-                                const SizedBox(width: 8),
-                                MainText(
-                                  'المستوى: ${activeChild.level}',
-                                  color: Colors.white.withOpacity(0.9),
-                                  fontSize: 14,
-                                ),
-                              ],
-                            ),
-                          ),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
-                            decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.12),
-                              borderRadius: BorderRadius.circular(20),
-                              border: Border.all(color: Colors.white10),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                const Icon(Icons.groups_outlined, color: Colors.white70, size: 16),
-                                const SizedBox(width: 8),
-                                MainText(
-                                  'المجموعة: ${activeChild.groupName}',
-                                  color: Colors.white.withOpacity(0.9),
-                                  fontSize: 14,
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-
-            const SizedBox(height: 24),
-
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const MainText(
-                    'أبنائي',
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
-                  const SizedBox(height: 16),
-                  SizedBox(
-                    height: 50,
-                    child: ListView.separated(
-                      scrollDirection: Axis.horizontal,
-                      clipBehavior: Clip.none,
-                      itemCount: childState.childrenList.length,
-                      separatorBuilder: (context, index) => const SizedBox(width: 12),
-                      itemBuilder: (context, index) {
-                        final child = childState.childrenList[index];
-                        final isSelected = child.id == activeChild.id;
-                        return GestureDetector(
-                          onTap: () => ref
-                              .read(childRiverpod.notifier)
-                              .selectChild(child.id),
-                          child: AnimatedContainer(
-                            duration: const Duration(milliseconds: 300),
-                            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-                            decoration: BoxDecoration(
-                              color: isSelected ? AppColors.primaryColor : cardColor,
-                              borderRadius: BorderRadius.circular(15),
-                              border: Border.all(
-                                color: isSelected ? AppColors.primaryColor : Colors.grey.withOpacity(0.3),
-                              ),
-                              boxShadow: isSelected ? [
-                                BoxShadow(
-                                  color: AppColors.primaryColor.withOpacity(0.2),
-                                  blurRadius: 10,
-                                  offset: const Offset(0, 4),
-                                )
-                              ] : null,
-                            ),
-                            child: Center(
-                              child: MainText(
-                                child.name,
-                                color: isSelected ? Colors.white : colorScheme.onSurface,
-                                fontSize: 14,
-                                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                              ),
-                            ),
-                          ),
-                        );
-                      },
                     ),
                   ),
-                  
-                  const SizedBox(height: 32),
-                  
+                ),
+                24.ph,
+                // Name
+                MainText(
+                  activeChild?.name ?? 'تحميل...',
+                  fontSize: 32,
+                  fontWeight: FontWeight.w900,
+                  color: isDark ? Colors.white : const Color(0xFF212121),
+                ),
+                24.ph,
+                // Badges Row
+                Wrap(
+                  alignment: WrapAlignment.center,
+                  spacing: 12,
+                  runSpacing: 8,
+                  children: [
+                    _buildPillBadge(
+                      text: activeChild != null ? 'المستوى ${activeChild.level}' : 'المستوى ...',
+                      icon: Icons.workspace_premium,
+                      backgroundColor: isDark ? AppColors.darkSurface : const Color(0xFFFDE8E8),
+                      textColor: isDark ? Colors.white : const Color(0xFF2D3243),
+                      iconColor: AppColors.primaryCrimson,
+                    ),
+                    _buildPillBadge(
+                      text: activeChild != null ? 'المجموعة ${activeChild.groupName}' : 'المجموعة ...',
+                      icon: Icons.groups,
+                      backgroundColor: isDark ? AppColors.darkSurface : const Color(0xFFF3F7FA),
+                      textColor: isDark ? Colors.white : const Color(0xFF2D3243),
+                      iconColor: isDark ? AppColors.vibrantRed : const Color(0xFF676E7D),
+                      borderColor: isDark ? Colors.white10 : const Color(0xFFE3EFF7),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+
+            32.ph,
+            // ── Children Switcher Section ──
+            if (childState.childrenList.isNotEmpty) ...[
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+                child: Row(
+                  children: [
+                    MainText(
+                      'الأبطال',
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                      color: isDark ? Colors.white : const Color(0xFF212121),
+                    ),
+                    const Spacer(),
+                  ],
+                ),
+              ),
+              _buildChildrenSection(childState.childrenList, activeChild?.id, isDark),
+            ],
+            
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0),
+              child: Column(
+                children: [
+                  18.ph,
                   _profileCard(
                     context,
+                    isDark: isDark,
                     title: 'طلب إذن',
                     icon: Icons.assignment_outlined,
                     onTap: () => context.push(Routes.permissions),
                   ),
-                  const SizedBox(height: 16),
+                  18.ph,
                   _profileCard(
                     context,
+                    isDark: isDark,
                     title: 'الحضور والغياب',
                     icon: Icons.how_to_reg_outlined,
                     onTap: () => context.push(Routes.attendanceAndAbsence),
                   ),
-                  const SizedBox(height: 16),
+                  18.ph,
                   _profileCard(
                     context,
+                    isDark: isDark,
                     title: 'الوضع الليلي',
-                    icon: themeMode == ThemeMode.dark ? Icons.dark_mode : Icons.light_mode,
+                    icon: iThemeMode(themeMode) == ThemeMode.dark ? Icons.dark_mode : Icons.light_mode,
                     onTap: () => ref.read(themeProvider.notifier).toggleTheme(),
                     trailing: Switch(
-                      value: themeMode == ThemeMode.dark,
-                      activeColor: AppColors.accentColor,
+                      value: iThemeMode(themeMode) == ThemeMode.dark,
+                      activeColor: AppColors.primaryCrimson,
                       onChanged: (val) => ref.read(themeProvider.notifier).toggleTheme(),
                     ),
                   ),
-                  const SizedBox(height: 16),
+                  18.ph,
                   _profileCard(
                     context,
+                    isDark: isDark,
                     title: 'تسجيل الخروج',
                     icon: Icons.logout_rounded,
+                    color: Colors.red,
                     onTap: () async {
                       await authNotifier.signOut();
                       if (context.mounted) {
                         context.go(Routes.login);
                       }
                     },
-                    color: Colors.red,
                   ),
+                  30.ph,
                 ],
               ),
             ),
@@ -255,29 +234,156 @@ class ProfilePage extends ConsumerWidget {
     );
   }
 
+  ThemeMode iThemeMode(ThemeMode mode) => mode;
+
+  Widget _buildChildrenSection(List children, int? selectedId, bool isDark) {
+    return SizedBox(
+      height: 160,
+      child: ListView.builder(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        scrollDirection: Axis.horizontal,
+        reverse: true, // RTL support for the list
+        itemCount: children.length,
+        itemBuilder: (context, index) {
+          final child = children[index];
+          final isSelected = child.id == selectedId;
+
+          return GestureDetector(
+            onTap: () {
+              ref.read(childRiverpod.notifier).selectChild(child.id);
+            },
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 10.0),
+              child: Column(
+                children: [
+                  Container(
+                    width: 76,
+                    height: 76,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(22),
+                      border: Border.all(
+                        color: isSelected
+                            ? AppColors.primaryCrimson
+                            : (isDark ? Colors.white.withOpacity(0.05) : const Color(0xFFEEEEEE)),
+                        width: isSelected ? 4.5 : 2,
+                      ),
+                      color: isSelected
+                          ? (isDark ? AppColors.darkSurface : AppColors.primaryCrimson.withOpacity(0.05))
+                          : (isDark ? AppColors.darkItem : const Color(0xFFF5F5F5)),
+                      boxShadow: isSelected && isDark ? [
+                        BoxShadow(
+                          color: AppColors.primaryCrimson.withOpacity(0.35),
+                          blurRadius: 18,
+                          spreadRadius: 4,
+                        )
+                      ] : null,
+                    ),
+                    padding: const EdgeInsets.all(4),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(18),
+                      child: child.imageUrl != null
+                          ? Image.network(
+                              child.imageUrl!,
+                              fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) =>
+                                  Icon(Icons.person, size: 38, color: isDark ? Colors.white30 : Colors.grey),
+                            )
+                          : Icon(Icons.person, size: 38, color: isDark ? Colors.white30 : Colors.grey),
+                    ),
+                  ),
+                  10.ph,
+                  SizedBox(
+                    width: 85,
+                    child: MainText(
+                      child.name, // Show whole name
+                      fontSize: 13,
+                      fontWeight: isSelected ? FontWeight.w900 : FontWeight.w600,
+                      color: isSelected
+                          ? (isDark ? Colors.white : AppColors.primaryCrimson)
+                          : (isDark ? Colors.white54 : const Color(0xFF676E7D)),
+                      textAlign: TextAlign.center,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildPillBadge({
+    required String text,
+    required IconData icon,
+    required Color backgroundColor,
+    required Color textColor,
+    required Color iconColor,
+    Color? borderColor,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      decoration: BoxDecoration(
+        color: backgroundColor,
+        borderRadius: BorderRadius.circular(32),
+        border: borderColor != null ? Border.all(color: borderColor) : null,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          MainText(
+            text,
+            fontSize: 14,
+            fontWeight: FontWeight.bold,
+            color: textColor,
+          ),
+          8.pw,
+          Icon(icon, color: iconColor, size: 18),
+        ],
+      ),
+    );
+  }
+
   Widget _profileCard(
     BuildContext context, {
+    required bool isDark,
     required String title,
     required IconData icon,
     Color? color,
     Widget? trailing,
     required ui.VoidCallback onTap,
   }) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final cardColor = isDark ? const Color(0xFF1E1E1E) : Colors.white;
+    final effectiveColor = color ?? AppColors.primaryCrimson;
 
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
         decoration: BoxDecoration(
-          color: cardColor,
-          borderRadius: BorderRadius.circular(20),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.04),
+          color: isDark ? AppColors.darkSurface : Colors.white,
+          borderRadius: BorderRadius.circular(24),
+          boxShadow: isDark 
+          ? [
+             BoxShadow(
+              color: Colors.black.withOpacity(0.2),
               blurRadius: 10,
               offset: const Offset(0, 4),
+            )
+          ] 
+          : [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 14,
+              offset: const Offset(0, 5),
             ),
           ],
         ),
@@ -286,24 +392,27 @@ class ProfilePage extends ConsumerWidget {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: (color ?? AppColors.primaryColor).withOpacity(0.08),
-                borderRadius: BorderRadius.circular(12),
+                color: effectiveColor.withOpacity(isDark ? 0.12 : 0.08),
+                borderRadius: BorderRadius.circular(16),
               ),
-              child: Icon(icon, color: color ?? AppColors.primaryColor, size: 24),
+              child: Icon(icon, color: effectiveColor, size: 24),
             ),
-            const SizedBox(width: 16),
+            const SizedBox(width: 18),
             Expanded(
               child: MainText(
                 title,
-                fontSize: 16,
+                fontSize: 18,
                 fontWeight: FontWeight.w600,
-                color: color ?? Theme.of(context).colorScheme.onSurface,
+                color: isDark ? Colors.white.withOpacity(0.9) : AppColors.lightText,
               ),
             ),
             if (trailing != null)
               trailing
             else
-              const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey),
+              Transform.flip(
+                flipX: true, // RTL flip
+                child: Icon(Icons.arrow_back_ios_new, size: 14, color: isDark ? Colors.white24 : Colors.grey.shade400),
+              ),
           ],
         ),
       ),
