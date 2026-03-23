@@ -195,7 +195,7 @@ class _AchievementPageState extends ConsumerState<AchievementPage>
                           ),
                           const SizedBox(height: 24),
                           MainText(
-                            'Ù„Ø§ ÙŠÙˆØ¬Ø¯ Ø¥Ù†Ø¬Ø§Ø²Ø§Øª Ù„Ù‡Ø°Ø§ Ø§Ù„Ø¨Ø·Ù„ Ø­Ø§Ù„ÙŠØ§Ù‹',
+                            "لا يوجد إنجازات لهذا البطل حالياً",
                             color: isDark ? Colors.white24 : Colors.grey,
                             fontSize: 16,
                             fontWeight: FontWeight.w700,

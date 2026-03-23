@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:gymnastics_club/core/theme/app_colors.dart';
+import 'package:gymnastics_club/widgets/app_network_image.dart';
 import 'package:gymnastics_club/widgets/main_text.dart';
 import 'dart:ui' as ui;
 
@@ -102,20 +103,15 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                           shape: BoxShape.circle,
                         ),
                         child: ClipOval(
-                          child: SizedBox(
-                            height: 140,
-                            width: 140,
-                            child: activeChild?.imageUrl != null
-                                ? Image.network(
-                                    activeChild!.imageUrl!,
-                                    fit: BoxFit.cover,
-                                    errorBuilder: (context, error, stackTrace) =>
-                                        Image.asset('assets/images/defualt-user.png', fit: BoxFit.cover),
-                                  )
-                                : Image.asset(
-                                    'assets/images/defualt-user.png',
-                                    fit: BoxFit.cover,
-                                  ),
+                          child: AppNetworkAvatar(
+                            url: activeChild?.imageUrl,
+                            size: 140,
+                            errorWidget: Image.asset(
+                              'assets/images/defualt-user.png',
+                              fit: BoxFit.cover,
+                              width: 140,
+                              height: 140,
+                            ),
                           ),
                         ),
                       ),
@@ -281,14 +277,15 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                     padding: const EdgeInsets.all(4),
                     child: ClipRRect(
                       borderRadius: BorderRadius.circular(18),
-                      child: child.imageUrl != null
-                          ? Image.network(
-                              child.imageUrl!,
-                              fit: BoxFit.cover,
-                              errorBuilder: (context, error, stackTrace) =>
-                                  Icon(Icons.person, size: 38, color: isDark ? Colors.white30 : Colors.grey),
-                            )
-                          : Icon(Icons.person, size: 38, color: isDark ? Colors.white30 : Colors.grey),
+                      child: AppNetworkAvatar(
+                        url: child.imageUrl,
+                        size: 68,
+                        errorWidget: Icon(
+                          Icons.person,
+                          size: 38,
+                          color: isDark ? Colors.white30 : Colors.grey,
+                        ),
+                      ),
                     ),
                   ),
                   10.ph,

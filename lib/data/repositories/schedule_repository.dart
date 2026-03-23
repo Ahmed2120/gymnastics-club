@@ -1,4 +1,5 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../core/utils/app_logger.dart';
 import '../../core/services/init_getit.dart';
 import '../../core/services/supabase_service.dart';
 import '../models/models/schedule_model.dart';
@@ -17,7 +18,7 @@ class ScheduleRepository {
           .map<ScheduleModel>((e) => ScheduleModel.fromJson(e))
           .toList();
     } catch (e) {
-      print('Error getting schedule: $e');
+      AppLogger.log('Error getting schedule: $e');
       rethrow;
     }
   }

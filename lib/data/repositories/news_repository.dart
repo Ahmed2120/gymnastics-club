@@ -1,4 +1,5 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../core/utils/app_logger.dart';
 import '../../core/services/init_getit.dart';
 import '../../core/services/supabase_service.dart';
 import '../models/models/news_model.dart';
@@ -30,7 +31,7 @@ class NewsRepositories {
           .map<NewsModel>((e) => NewsModel.fromJson(e))
           .toList();
     } catch (e) {
-      print('Error getting news: $e');
+      AppLogger.log('Error getting news: $e');
       rethrow;
     }
   }
@@ -44,10 +45,10 @@ class NewsRepositories {
           'p_phone': phone,
         },
       );
-      print(response);
+      AppLogger.log(response);
       return Map<String, dynamic>.from(response);
     } catch (e) {
-      print('Error toggling like: $e');
+      AppLogger.log('Error toggling like: $e');
       rethrow;
     }
   }

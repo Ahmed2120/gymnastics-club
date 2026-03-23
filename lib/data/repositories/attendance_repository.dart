@@ -1,4 +1,5 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../core/utils/app_logger.dart';
 import '../../core/services/init_getit.dart';
 import '../../core/services/supabase_service.dart';
 import '../models/models/attendance_model.dart';
@@ -22,7 +23,7 @@ class AttendanceRepository {
         'p_page': page,
         'p_limit': limit,
       });
-      print(response);
+      AppLogger.log(response);
       return (response as List).map((e) {
         // Map DB fields to Model fields if they differ
         return AttendanceModel.fromJson({
@@ -32,7 +33,7 @@ class AttendanceRepository {
         });
       }).toList();
     } catch (e) {
-      print('Error getting attendance: $e');
+      AppLogger.log('Error getting attendance: $e');
       rethrow;
     }
   }

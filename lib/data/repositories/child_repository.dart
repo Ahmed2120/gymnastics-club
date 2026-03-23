@@ -1,4 +1,5 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../core/utils/app_logger.dart';
 import '../../core/services/init_getit.dart';
 import '../../core/services/supabase_service.dart';
 import '../models/models/child_model.dart';
@@ -20,7 +21,7 @@ class ChildRepository {
           .map<ChildModel>((e) => ChildModel.fromJson(e))
           .toList();
     } catch (e) {
-      print('Error getting children: $e');
+      AppLogger.log('Error getting children: $e');
       rethrow;
     }
   }
@@ -34,7 +35,7 @@ class ChildRepository {
           .single();
       return ChildModel.fromJson(response);
     } catch (e) {
-      print('Error getting child details: $e');
+      AppLogger.log('Error getting child details: $e');
       rethrow;
     }
   }

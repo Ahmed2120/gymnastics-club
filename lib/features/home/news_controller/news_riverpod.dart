@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
 
 import '../../../core/services/init_getit.dart';
+import '../../../core/utils/app_logger.dart';
 import '../../../data/models/models/news_model.dart';
 import '../../../data/repositories/news_repository.dart';
 import '../../auth/auth_provider.dart';
@@ -128,7 +129,7 @@ class NewsRiverpod extends StateNotifier<NewsState> {
         }
       }
     } catch (e) {
-      print('Failed to toggle like: $e');
+      AppLogger.log('Failed to toggle like: $e');
       // Revert handle or error state if needed
     }
   }

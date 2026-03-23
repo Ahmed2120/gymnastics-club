@@ -1,6 +1,7 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:gymnastics_club/core/utils/app_logger.dart';
 import 'package:gymnastics_club/widgets/main_text.dart';
 import 'package:gymnastics_club/core/theme/app_colors.dart';
 
@@ -18,7 +19,7 @@ class MotivationCard extends StatelessWidget {
           .maybeSingle();
       return data;
     } catch (e) {
-      debugPrint('Error fetching motivation quote: $e');
+      AppLogger.log('Error fetching motivation quote: $e');
       return null;
     }
   }

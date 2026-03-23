@@ -2,6 +2,14 @@
 
 This file tracks all features added, edited, or removed in the Gymnastics Club project.
 
+## [2026-03-19] App Logger Implementation
+- **Feature**: Centralized Logging System
+- **Description**: Created `AppLogger` class in `lib/core/utils/app_logger.dart` to handle all app logs.
+- **Security**: Added `kDebugMode` check to ensure logs are only printed during development and not in production.
+- **Refactoring**: Replaced all `print` and `debugPrint` calls across the project with `AppLogger.log`.
+- **Files Modified**: 12 files refactored in `gymnastics_club`.
+
+
 ## [2024-03-16] Achievement Spotlight Visual Update
 - Updated theme to match user's image: White background card with a subtle Gold border.
 - Corrected text colors: Dark Blue for titles, Gold/Brown for rank, and Muted Grey for date.

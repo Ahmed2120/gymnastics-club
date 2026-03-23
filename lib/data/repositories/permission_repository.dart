@@ -1,4 +1,5 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../core/utils/app_logger.dart';
 import '../../core/services/init_getit.dart';
 import '../../core/services/supabase_service.dart';
 import '../models/models/permission_model.dart';
@@ -24,7 +25,7 @@ class PermissionRepository {
           .map<PermissionModel>((e) => PermissionModel.fromJson(e))
           .toList();
     } catch (e) {
-      print('Error getting permission requests: $e');
+      AppLogger.log('Error getting permission requests: $e');
       rethrow;
     }
   }
@@ -33,7 +34,7 @@ class PermissionRepository {
     try {
       await _client.from('permissions').insert(request.toJson());
     } catch (e) {
-      print('Error submitting permission request: $e');
+      AppLogger.log('Error submitting permission request: $e');
       rethrow;
     }
   }

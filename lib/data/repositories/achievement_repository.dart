@@ -1,4 +1,5 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../core/utils/app_logger.dart';
 import '../../core/services/init_getit.dart';
 import '../../core/services/supabase_service.dart';
 import '../models/models/achievement_model.dart';
@@ -28,7 +29,7 @@ class AchievementRepository {
       if (startIndex >= all.length) return [];
       return all.skip(startIndex).take(limit).toList();
     } catch (e) {
-      print('Error getting achievements: $e');
+      AppLogger.log('Error getting achievements: $e');
       rethrow;
     }
   }

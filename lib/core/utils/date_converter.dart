@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import '../../main.dart';
+import '../utils/app_logger.dart';
 import '../routing/app_router.dart';
 
 class DateConverter {
@@ -167,8 +168,8 @@ class DateConverter {
     List<String> parts = timeStr.split(
       ':',
     ); // Split "14:41:00" into ["14", "41", "00"]
-    print('parts');
-    print(parts);
+    AppLogger.log('parts');
+    AppLogger.log(parts);
     int hour = int.parse(parts[0]);
     int minute = int.parse(parts[1]);
 

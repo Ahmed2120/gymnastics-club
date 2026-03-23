@@ -1,4 +1,5 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../core/utils/app_logger.dart';
 import '../../core/services/init_getit.dart';
 import '../../core/services/supabase_service.dart';
 
@@ -9,7 +10,7 @@ class AuthRepository {
     try {
       await _client.auth.signInWithOtp(phone: phone);
     } catch (e) {
-      print('Error signing in with OTP: $e');
+      AppLogger.log('Error signing in with OTP: $e');
       rethrow;
     }
   }
@@ -26,7 +27,7 @@ class AuthRepository {
       );
       return response;
     } catch (e) {
-      print('Error verifying OTP: $e');
+      AppLogger.log('Error verifying OTP: $e');
       rethrow;
     }
   }
@@ -42,7 +43,7 @@ class AuthRepository {
 
       return response != null;
     } catch (e) {
-      print('Error signing in with password: $e');
+      AppLogger.log('Error signing in with password: $e');
       rethrow;
     }
   }
@@ -54,7 +55,7 @@ class AuthRepository {
           .update({'password': newPassword})
           .eq('phone', phone);
     } catch (e) {
-      print('Error updating password: $e');
+      AppLogger.log('Error updating password: $e');
       rethrow;
     }
   }
