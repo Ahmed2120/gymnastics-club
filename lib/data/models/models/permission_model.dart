@@ -8,6 +8,8 @@ class PermissionModel {
   final PermissionStatusEnum status;
   final String? createdAt;
 
+  final String? rejectionReason;
+
   PermissionModel({
     this.id,
     required this.childName,
@@ -15,6 +17,7 @@ class PermissionModel {
     required this.reason,
     required this.status,
     this.createdAt,
+    this.rejectionReason,
   });
 
   // Convert to JSON
@@ -24,6 +27,7 @@ class PermissionModel {
       'date': date?.toIso8601String(),
       'reason': reason,
       'status': status.name,
+      'rejection_reason': rejectionReason,
     };
     if (id != null) map['id'] = id as dynamic;
     return map;
@@ -43,6 +47,7 @@ class PermissionModel {
         orElse: () => PermissionStatusEnum.pending,
       ),
       createdAt: json['created_at'],
+      rejectionReason: json['rejection_reason'],
     );
   }
 
@@ -54,6 +59,7 @@ class PermissionModel {
     String? reason,
     PermissionStatusEnum? status,
     String? createdAt,
+    String? rejectionReason,
   }) {
     return PermissionModel(
       id: id ?? this.id,
@@ -62,6 +68,7 @@ class PermissionModel {
       reason: reason ?? this.reason,
       status: status ?? this.status,
       createdAt: createdAt ?? this.createdAt,
+      rejectionReason: rejectionReason ?? this.rejectionReason,
     );
   }
 }

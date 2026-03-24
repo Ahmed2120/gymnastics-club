@@ -157,7 +157,7 @@ class _HomePageState extends ConsumerState<HomePage> {
                                 ),
                               ),
                             ),
-
+                            
                             // ── 2. Greeting (Center) ──
                             Expanded(
                               child: Column(

@@ -182,7 +182,9 @@ class RequestWidget extends StatelessWidget {
             ),
 
             // Rejection note
-            if (status == PermissionStatusEnum.rejected) ...[
+            if (status == PermissionStatusEnum.rejected && 
+                permissionModel.rejectionReason != null && 
+                permissionModel.rejectionReason!.isNotEmpty) ...[
               const SizedBox(height: 10),
               Container(
                 padding:
@@ -198,7 +200,7 @@ class RequestWidget extends StatelessWidget {
                     const SizedBox(width: 8),
                     Expanded(
                       child: MainText(
-                        'عذراً، يوم البطولة لا يمكن الغياب',
+                        permissionModel.rejectionReason!,
                         fontSize: 12,
                         color: accentColor,
                       ),

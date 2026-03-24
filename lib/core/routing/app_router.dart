@@ -1,18 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:gymnastics_club/features/permission/screens/request_permission.dart';
+import 'package:gymnastics_club/features/notifications/screens/parent_notifications_page.dart';
 
 import '../../features/attendance_and_absence.dart';
 import '../../features/auth/screens/forget_password.dart';
 import '../../features/auth/screens/login.dart';
 import '../../features/dashboard.dart';
 import '../../features/permission/screens/permissions_screen.dart';
+import '../../features/splash/splash_screen.dart';
 import 'routes.dart';
 
 final GoRouter router = GoRouter(
   navigatorKey: navigatorKey,
-  initialLocation: Routes.login,
+  initialLocation: Routes.splash,
   routes: [
+    GoRoute(
+      path: Routes.splash,
+      builder: (context, state) => const SplashScreen(),
+    ),
     GoRoute(
       path: Routes.login,
       builder: (context, state) => const LoginScreen(),
@@ -36,6 +42,10 @@ final GoRouter router = GoRouter(
     GoRoute(
       path: Routes.forgetPassword,
       builder: (context, state) => const ForgetPasswordScreen(),
+    ),
+    GoRoute(
+      path: Routes.notifications,
+      builder: (context, state) => const ParentNotificationsPage(),
     ),
   ],
 );
