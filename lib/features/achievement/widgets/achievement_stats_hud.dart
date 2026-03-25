@@ -113,11 +113,7 @@ class AchievementStatsHUD extends StatelessWidget {
   }
 
   String _formatCount(int number) {
-    String s = number.toString().padLeft(2, '0');
-    const arabicNumbers = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
-    return s.split('').map((e) {
-      int? val = int.tryParse(e);
-      return val != null ? arabicNumbers[val] : e;
-    }).join('');
+    if (number == 0) return '..';
+    return number.toString().padLeft(2, '0');
   }
 }

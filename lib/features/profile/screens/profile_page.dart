@@ -126,6 +126,15 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                   fontWeight: FontWeight.w900,
                   color: isDark ? Colors.white : const Color(0xFF212121),
                 ),
+                if (activeChild?.parentEmail != null && activeChild!.parentEmail!.isNotEmpty) ...[
+                  4.ph,
+                  MainText(
+                    activeChild!.parentEmail!,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                    color: isDark ? Colors.white70 : Colors.black54,
+                  ),
+                ],
                 24.ph,
                 // Badges Row
                 Wrap(

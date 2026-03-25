@@ -5,6 +5,8 @@ import 'package:gymnastics_club/features/notifications/screens/parent_notificati
 
 import '../../features/attendance_and_absence.dart';
 import '../../features/auth/screens/forget_password.dart';
+import '../../features/auth/screens/verification_screen.dart';
+import '../../features/auth/screens/reset_password_screen.dart';
 import '../../features/auth/screens/login.dart';
 import '../../features/dashboard.dart';
 import '../../features/permission/screens/permissions_screen.dart';
@@ -42,6 +44,14 @@ final GoRouter router = GoRouter(
     GoRoute(
       path: Routes.forgetPassword,
       builder: (context, state) => const ForgetPasswordScreen(),
+    ),
+    GoRoute(
+      path: Routes.verifyOtp,
+      builder: (context, state) => const VerifyOtpScreen(),
+    ),
+    GoRoute(
+      path: Routes.resetPassword,
+      builder: (context, state) => const ResetPasswordScreen(),
     ),
     GoRoute(
       path: Routes.notifications,

@@ -5,7 +5,7 @@ import 'package:gymnastics_club/widgets/main_text.dart';
 
 class PulsingAvatar extends StatefulWidget {
   final String? imageUrl;
-  final int level;
+  final String level;
   final double radius;
 
   const PulsingAvatar({
@@ -120,11 +120,22 @@ class _PulsingAvatarState extends State<PulsingAvatar>
                   ),
                 ],
               ),
-              child: MainText(
-                _toArabicNumber(widget.level),
-                color: const Color(0xFF1A0D0D),
-                fontSize: 16,
-                fontWeight: FontWeight.w900,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.workspace_premium_rounded,
+                    color: const Color(0xFF1A0D0D).withOpacity(0.8),
+                    size: 16,
+                  ),
+                  const SizedBox(width: 8),
+                  MainText(
+                    widget.level,
+                    color: const Color(0xFF1A0D0D),
+                    fontSize: 14,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ],
               ),
             ),
           ),
@@ -133,13 +144,4 @@ class _PulsingAvatarState extends State<PulsingAvatar>
     );
   }
 
-  String _toArabicNumber(int number) {
-    const arabicNumbers = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
-    String numStr = number.toString();
-    String arabicNum = numStr.split('').map((e) {
-      int? val = int.tryParse(e);
-      return val != null ? arabicNumbers[val] : e;
-    }).join('');
-    return 'مستوى $arabicNum';
-  }
 }

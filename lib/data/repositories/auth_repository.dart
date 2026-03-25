@@ -6,6 +6,8 @@ import '../../core/services/supabase_service.dart';
 class AuthRepository {
   final SupabaseClient _client = getIT<SupabaseService>().client;
 
+  // ─── Phone login (unchanged) ─────────────────────────────────────────────
+
   Future<void> signInWithOtp(String phone) async {
     try {
       await _client.auth.signInWithOtp(phone: phone);
@@ -59,6 +61,69 @@ class AuthRepository {
       rethrow;
     }
   }
+
+  // ─── Email OTP for forgot password ──────────────────────────────────────
+
+  Future<void> sendEmailOtp(String email) async {
+    try {
+      final response = await _client.functions.invoke(
+        'send-reset-otp',
+        body: {'email': email},
+      );
+
+      if (response.status != 200) {
+        final error = response.data['error'] ?? 'حدث خطأ ما';
+        throw Exception(error);
+      }
+    } catch (e) {
+      AppLogger.log('Error sending email OTP: $e');
+      rethrow;
+    }
+  }
+
+  Future<void> verifyEmailOtp({
+    required String email,
+    required String token,
+  }) async {
+    try {
+      final isValid = await _client.rpc('api_verify_otp', params: {
+        'p_email': email,
+        'p_otp': token,
+      });
+
+      if (isValid != true) {
+        throw 'كود التحقق غير صحيح أو انتهت صلاحيته';
+      }
+    } catch (e) {
+      AppLogger.log('Error verifying email OTP: $e');
+      rethrow;
+    }
+  }
+
+  /// Finds the parent by their email address and updates the password.
+  Future<void> updatePasswordByEmail(String email, String newPassword) async {
+    try {
+      final parent = await _client
+          .from('parents')
+          .select('phone')
+          .eq('email', email)
+          .maybeSingle();
+
+      if (parent == null) {
+        throw Exception('لم يتم العثور على حساب بهذا البريد الإلكتروني');
+      }
+
+      await _client
+          .from('parents')
+          .update({'password': newPassword})
+          .eq('email', email);
+    } catch (e) {
+      AppLogger.log('Error updating password by email: $e');
+      rethrow;
+    }
+  }
+
+  // ─── Common ──────────────────────────────────────────────────────────────
 
   User? get currentUser => _client.auth.currentUser;
 

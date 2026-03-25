@@ -136,16 +136,12 @@ class _AchievementPageState extends ConsumerState<AchievementPage>
                                 final silverCount = _getCount(achievements, 'silver');
                                 final bronzeCount = _getCount(achievements, 'bronze');
 
-                                int level = 1;
-                                try {
-                                  level = int.parse(selectedChild?.level ?? '1');
-                                } catch (_) {}
 
                                 return Column(
                                   children: [
                                     PulsingAvatar(
                                       imageUrl: selectedChild?.imageUrl,
-                                      level: level,
+                                      level: selectedChild?.level ?? '',
                                       radius: 65,
                                     ),
                                     const SizedBox(height: 20),

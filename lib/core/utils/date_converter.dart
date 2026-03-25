@@ -169,22 +169,39 @@ class DateConverter {
       ':',
     ); // Split "14:41:00" into ["14", "41", "00"]
     AppLogger.log('parts');
-    AppLogger.log(parts);
     int hour = int.parse(parts[0]);
     int minute = int.parse(parts[1]);
 
-    String formattedHour = (hour > 12)
-        ? (hour - 12).toString()
-        : hour.toString();
+    String formattedHour = (hour > 12) ? (hour - 12).toString() : hour.toString();
     if (hour == 0) formattedHour = "12"; // Midnight case
     if (hour == 12) formattedHour = "12"; // Noon case
 
     String formattedMinute = minute.toString().padLeft(2, '0');
     String amPm = (hour >= 12) ? "PM" : "AM";
 
-    return includeAMPM
-        ? "$formattedHour:$formattedMinute $amPm"
-        : "$formattedHour:$formattedMinute";
+    return includeAMPM ? "$formattedHour:$formattedMinute $amPm" : "$formattedHour:$formattedMinute";
+  }
+
+  static String formatTimeArabic(String? timeStr) {
+    if (timeStr == null || timeStr.isEmpty) return '';
+    try {
+      // Handle "17:00" or "17:00:00"
+      List<String> parts = timeStr.trim().split(':');
+      int hour = int.parse(parts[0]);
+      int minute = int.parse(parts[1]);
+
+      String period = (hour >= 12) ? "مساءً" : "صباحاً";
+
+      int hour12 = hour % 12;
+      if (hour12 == 0) hour12 = 12;
+
+      String formattedHour = hour12.toString().padLeft(2, '0');
+      String formattedMinute = minute.toString().padLeft(2, '0');
+
+      return "$formattedHour:$formattedMinute $period";
+    } catch (e) {
+      return timeStr;
+    }
   }
 
   static String isoStringToDateTimeString(String dateTime) {

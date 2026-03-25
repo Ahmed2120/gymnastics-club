@@ -223,7 +223,7 @@ class _TrainingCountdownState extends ConsumerState<TrainingCountdown> {
                 )
               else
                 MainText(
-                  '${_nextSessionModel?.day ?? ''} - ${_nextSessionModel?.startTime ?? ''}',
+                  '${_nextSessionModel?.day ?? ''} - ${DateConverter.formatTimeArabic(_nextSessionModel?.startTime)}',
                   color: Colors.white,
                   fontSize: 28,
                   fontWeight: FontWeight.w900,

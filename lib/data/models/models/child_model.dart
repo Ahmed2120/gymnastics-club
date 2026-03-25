@@ -8,6 +8,7 @@ class ChildModel {
   final String level;
   final String? imageUrl;
   final String? parentName;
+  final String? parentEmail;
 
   ChildModel({
     required this.id,
@@ -19,6 +20,7 @@ class ChildModel {
     required this.level,
     this.imageUrl,
     this.parentName,
+    this.parentEmail,
   });
 
   factory ChildModel.fromJson(Map<String, dynamic> json) {
@@ -35,6 +37,7 @@ class ChildModel {
       level: json['level'] ?? '',
       imageUrl: json['image_url'],
       parentName: json['parent_name'],
+      parentEmail: json['parent_email'],
     );
   }
 
@@ -49,6 +52,7 @@ class ChildModel {
       "level": level,
       "image_url": imageUrl,
       "parent_name": parentName,
+      "parent_email": parentEmail,
     };
   }
 
