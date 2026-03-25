@@ -52,6 +52,18 @@ class AuthNotifier extends Notifier<AuthState> {
   AuthState build() => AuthState();
 
   AuthRepository get _repository => ref.read(authRepositoryProvider);
+ 
+  void clearError() {
+    state = state.copyWith(errorMessage: null);
+  }
+
+  String _getErrorMessage(Object e) {
+    final message = e.toString();
+    if (message.startsWith('Exception: ')) {
+      return message.substring(11);
+    }
+    return message;
+  }
 
   // ─── Phone OTP (kept for any existing usage) ─────────────────────────────
 
@@ -65,7 +77,7 @@ class AuthNotifier extends Notifier<AuthState> {
         phoneNumber: phone,
       );
     } catch (e) {
-      state = state.copyWith(isLoading: false, errorMessage: e.toString());
+      state = state.copyWith(isLoading: false, errorMessage: _getErrorMessage(e));
     }
   }
 
@@ -87,7 +99,7 @@ class AuthNotifier extends Notifier<AuthState> {
         return false;
       }
     } catch (e) {
-      state = state.copyWith(isLoading: false, errorMessage: e.toString());
+      state = state.copyWith(isLoading: false, errorMessage: _getErrorMessage(e));
       return false;
     }
   }
@@ -104,7 +116,7 @@ class AuthNotifier extends Notifier<AuthState> {
         email: email,
       );
     } catch (e) {
-      state = state.copyWith(isLoading: false, errorMessage: e.toString());
+      state = state.copyWith(isLoading: false, errorMessage: _getErrorMessage(e));
     }
   }
 
@@ -123,7 +135,7 @@ class AuthNotifier extends Notifier<AuthState> {
       );
       return true;
     } catch (e) {
-      state = state.copyWith(isLoading: false, errorMessage: e.toString());
+      state = state.copyWith(isLoading: false, errorMessage: _getErrorMessage(e));
       return false;
     }
   }
@@ -144,7 +156,7 @@ class AuthNotifier extends Notifier<AuthState> {
       );
       return true;
     } catch (e) {
-      state = state.copyWith(isLoading: false, errorMessage: e.toString());
+      state = state.copyWith(isLoading: false, errorMessage: _getErrorMessage(e));
       return false;
     }
   }
@@ -163,7 +175,7 @@ class AuthNotifier extends Notifier<AuthState> {
       state = state.copyWith(isLoading: false);
       return true;
     } catch (e) {
-      state = state.copyWith(isLoading: false, errorMessage: e.toString());
+      state = state.copyWith(isLoading: false, errorMessage: _getErrorMessage(e));
       return false;
     }
   }

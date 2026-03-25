@@ -20,6 +20,14 @@ class ForgetPasswordScreen extends ConsumerStatefulWidget {
 
 class _ForgetPasswordScreenState extends ConsumerState<ForgetPasswordScreen> {
   final _emailController = TextEditingController();
+ 
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(authProvider.notifier).clearError();
+    });
+  }
 
   @override
   void dispose() {

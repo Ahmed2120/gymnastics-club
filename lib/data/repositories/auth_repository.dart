@@ -36,14 +36,12 @@ class AuthRepository {
 
   Future<bool> signInWithPassword(String phone, String password) async {
     try {
-      final response = await _client
-          .from('parents')
-          .select()
-          .eq('phone', phone)
-          .eq('password', password)
-          .maybeSingle();
+      final bool isValid = await _client.rpc('verify_parent_password', params: {
+        'p_phone': phone,
+        'p_password': password,
+      });
 
-      return response != null;
+      return isValid;
     } catch (e) {
       AppLogger.log('Error signing in with password: $e');
       rethrow;
@@ -75,6 +73,11 @@ class AuthRepository {
         final error = response.data['error'] ?? 'حدث خطأ ما';
         throw Exception(error);
       }
+    } on FunctionException catch (e) {
+      final msg = (e.details is Map ? e.details['error']?.toString() : null) ??
+          e.reasonPhrase ??
+          'حدث خطأ ما';
+      throw Exception(msg);
     } catch (e) {
       AppLogger.log('Error sending email OTP: $e');
       rethrow;

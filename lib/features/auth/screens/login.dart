@@ -38,6 +38,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
       end: Offset.zero,
     ).animate(CurvedAnimation(parent: _animController, curve: Curves.easeOut));
     _animController.forward();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(authProvider.notifier).clearError();
+    });
   }
 
   @override
