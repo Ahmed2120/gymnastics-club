@@ -45,11 +45,11 @@ class AppNetworkImage extends StatelessWidget {
   }
 
   Widget _defaultError() {
-    return Container(
+    return Image.asset(
+      'assets/images/defualt-user.png',
       width: width,
       height: height,
-      color: Colors.grey.shade200,
-      child: const Icon(Icons.person, color: Colors.grey),
+      fit: fit,
     );
   }
 
@@ -72,11 +72,11 @@ class AppNetworkAvatar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final fallback = errorWidget ??
-        Container(
+        Image.asset(
+          'assets/images/defualt-user.png',
           width: size,
           height: size,
-          color: Colors.grey.shade200,
-          child: Icon(Icons.person, size: size * 0.6, color: Colors.grey),
+          fit: BoxFit.cover,
         );
 
     if (url == null || url!.isEmpty) return ClipOval(child: fallback);

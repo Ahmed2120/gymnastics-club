@@ -17,6 +17,7 @@ import '../widgets/training_countdown.dart';
 import '../widgets/achievement_spotlight.dart';
 import '../widgets/motivation_card.dart';
 import '../widgets/animated_like_button.dart';
+import '../../../widgets/full_screen_viewer.dart';
 
 class HomePage extends ConsumerStatefulWidget {
   const HomePage({super.key});
@@ -147,13 +148,27 @@ class _HomePageState extends ConsumerState<HomePage> {
                                   shape: BoxShape.circle,
                                   color: isDark ? AppColors.darkBackground : Colors.white,
                                 ),
-                                child: CircleAvatar(
-                                  radius: 20,
-                                  backgroundColor: isDark ? AppColors.darkSurface : AppColors.primaryColor.withOpacity(0.05),
-                                  backgroundImage: user?.imageUrl != null
-                                      ? NetworkImage(user!.imageUrl!)
-                                      : const AssetImage(AppAssets.userPlaceholder)
-                                          as ImageProvider,
+                                child: GestureDetector(
+                                  onTap: () {
+                                    if (user?.imageUrl != null) {
+                                      FullScreenImageViewer.open(
+                                        context,
+                                        NetworkImage(user!.imageUrl!),
+                                        'profile_avatar_header',
+                                      );
+                                    }
+                                  },
+                                  child: Hero(
+                                    tag: 'profile_avatar_header',
+                                    child: CircleAvatar(
+                                      radius: 20,
+                                      backgroundColor: isDark ? AppColors.darkSurface : AppColors.primaryColor.withOpacity(0.05),
+                                      backgroundImage: user?.imageUrl != null
+                                          ? NetworkImage(user!.imageUrl!)
+                                          : const AssetImage(AppAssets.userPlaceholder)
+                                              as ImageProvider,
+                                    ),
+                                  ),
                                 ),
                               ),
                             ),
@@ -356,11 +371,29 @@ class _HomePageState extends ConsumerState<HomePage> {
             if (hasImage)
               Stack(
                 children: [
-                  CachedNetworkImage(
-                    imageUrl: news.imageUrl!,
-                    height: 180,
-                    width: double.infinity,
-                    fit: BoxFit.cover,
+                  GestureDetector(
+                    onTap: () {
+                      FullScreenImageViewer.open(
+                        context,
+                        CachedNetworkImageProvider(news.imageUrl!),
+                        'news_${news.id}',
+                      );
+                    },
+                    child: Hero(
+                      tag: 'news_${news.id}',
+                      child: CachedNetworkImage(
+                        imageUrl: news.imageUrl!,
+                        height: 180,
+                        width: double.infinity,
+                        fit: BoxFit.cover,
+                        errorWidget: (context, url, error) => Image.asset(
+                          AppAssets.newsPlaceholder,
+                          height: 180,
+                          width: double.infinity,
+                          fit: BoxFit.cover,
+                        ),
+                      ),
+                    ),
                   ),
                   // Heart Overlay (Top Left)
                   Positioned(

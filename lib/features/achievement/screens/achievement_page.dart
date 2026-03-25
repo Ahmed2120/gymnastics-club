@@ -13,6 +13,7 @@ import '../../../widgets/shimmer_widgets.dart';
 import '../widgets/achievement_stats_hud.dart';
 import '../widgets/pulsing_avatar.dart';
 import '../../../widgets/custom_app_bar_button.dart';
+import '../../../widgets/full_screen_viewer.dart';
 
 class AchievementPage extends ConsumerStatefulWidget {
   const AchievementPage({super.key});
@@ -146,7 +147,7 @@ class _AchievementPageState extends ConsumerState<AchievementPage>
                                     ),
                                     const SizedBox(height: 20),
                                     MainText(
-                                      selectedChild?.name ?? 'Ø§Ù„Ø¨Ø·Ù„',
+                                      selectedChild?.name ?? 'البطل',
                                       color: isDark ? Colors.white : AppColors.lightText,
                                       fontSize: 28,
                                       fontWeight: FontWeight.w900,
@@ -237,9 +238,9 @@ class _AchievementPageState extends ConsumerState<AchievementPage>
   int _getCount(List<AchievementModel> achievements, String type) {
     return achievements.where((a) {
       final t = a.championType?.toLowerCase() ?? '';
-      if (type == 'gold') return t == 'gold' || t == '???';
-      if (type == 'silver') return t == 'silver' || t == '???';
-      if (type == 'bronze') return t == 'bronze' || t == '?????';
+      if (type == 'gold') return t == 'gold' || t == 'ذهب';
+      if (type == 'silver') return t == 'silver' || t == 'فضة';
+      if (type == 'bronze') return t == 'bronze' || t == 'برونز';
       return false;
     }).length;
   }
@@ -280,7 +281,9 @@ class _AchievementCardState extends State<_AchievementCard>
       vsync: this,
       duration: const Duration(milliseconds: 150),
     );
-    _opacity = CurvedAnimation(parent: _fadeController, curve: const Interval(0.0, 0.6, curve: Curves.easeOut));
+    _opacity = CurvedAnimation(
+        parent: _fadeController,
+        curve: const Interval(0.0, 0.6, curve: Curves.easeOut));
     _slide = Tween<Offset>(
       begin: const Offset(0, 0.2),
       end: Offset.zero,
@@ -291,7 +294,7 @@ class _AchievementCardState extends State<_AchievementCard>
     _rotate = Tween<double>(begin: 0.15, end: 0.0).animate(
       CurvedAnimation(parent: _fadeController, curve: Curves.easeOut),
     );
-    
+
     final delay = Duration(milliseconds: 80 * (widget.index.clamp(0, 6)));
     Future.delayed(delay, () {
       if (mounted) _fadeController.forward();
@@ -308,13 +311,13 @@ class _AchievementCardState extends State<_AchievementCard>
   Color _getMedalColor(String? championType) {
     switch (championType?.toLowerCase()) {
       case 'gold':
-      case '???':
+      case 'ذهب':
         return AppColors.achievementGold;
       case 'silver':
-      case '???':
+      case 'فضة':
         return const Color(0xFFC0C0C0);
       case 'bronze':
-      case '?????':
+      case 'برونز':
         return const Color(0xFFCD7F32);
       default:
         return AppColors.primaryCrimson;
@@ -324,11 +327,11 @@ class _AchievementCardState extends State<_AchievementCard>
   IconData _getMedalIcon(String? championType) {
     switch (championType?.toLowerCase()) {
       case 'gold':
-      case '???':
+      case 'ذهب':
       case 'silver':
-      case '???':
+      case 'فضة':
       case 'bronze':
-      case '?????':
+      case 'برونز':
         return Icons.emoji_events_rounded;
       default:
         return Icons.star_rounded;
@@ -356,14 +359,15 @@ class _AchievementCardState extends State<_AchievementCard>
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (_) => AchievementDetailScreen(item: item, isDark: isDark),
+                  builder: (_) =>
+                      AchievementDetailScreen(item: item, isDark: isDark),
                 ),
               );
             },
             onTapCancel: () => _clickController.reverse(),
             child: AnimatedBuilder(
               animation: _fadeController,
-              builder: (context, child) {
+              builder: (context, animChild) {
                 return Transform(
                   transform: Matrix4.identity()
                     ..setEntry(3, 2, 0.001)
@@ -372,162 +376,195 @@ class _AchievementCardState extends State<_AchievementCard>
                   alignment: Alignment.center,
                   child: ScaleTransition(
                     scale: Tween<double>(begin: 1.0, end: 0.97).animate(
-                      CurvedAnimation(parent: _clickController, curve: Curves.easeOut),
+                      CurvedAnimation(
+                          parent: _clickController, curve: Curves.easeOut),
                     ),
-                    child: child,
+                    child: animChild,
                   ),
                 );
               },
-              child: Hero(
-                tag: 'achievement_${item.id}',
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: cardBg,
-                    borderRadius: BorderRadius.circular(32),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(isDark ? 0.3 : 0.05),
-                        blurRadius: 15,
-                        offset: const Offset(0, 8),
-                      ),
-                    ],
-                    border: Border.all(
-                      color: isDark ? Colors.white.withOpacity(0.05) : Colors.grey.withOpacity(0.05),
-                      width: 1.5,
+              child: Container(
+                decoration: BoxDecoration(
+                  color: cardBg,
+                  borderRadius: BorderRadius.circular(32),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(isDark ? 0.3 : 0.05),
+                      blurRadius: 15,
+                      offset: const Offset(0, 8),
                     ),
+                  ],
+                  border: Border.all(
+                    color: isDark
+                        ? Colors.white.withOpacity(0.05)
+                        : Colors.grey.withOpacity(0.05),
+                    width: 1.5,
                   ),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(32),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        if (hasImage)
-                          Stack(
-                            children: [
-                              CachedNetworkImage(
-                                imageUrl: item.imageUrl!,
-                                height: 200,
-                                width: double.infinity,
-                                fit: BoxFit.cover,
-                                placeholder: (context, url) => Container(
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(32),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      if (hasImage)
+                        GestureDetector(
+                          onTap: () {
+                            FullScreenImageViewer.open(
+                              context,
+                              CachedNetworkImageProvider(item.imageUrl!),
+                              'achievement_${item.id}',
+                            );
+                          },
+                          child: Hero(
+                            tag: 'achievement_${item.id}',
+                            child: Stack(
+                              children: [
+                                CachedNetworkImage(
+                                  imageUrl: item.imageUrl!,
                                   height: 200,
-                                  color: isDark ? const Color(0xFF1E1414) : Colors.grey[100],
-                                  child: const Center(
-                                    child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primaryCrimson),
+                                  width: double.infinity,
+                                  fit: BoxFit.cover,
+                                  placeholder: (context, url) => Container(
+                                    height: 200,
+                                    color: isDark
+                                        ? const Color(0xFF1E1414)
+                                        : Colors.grey[100],
+                                    child: const Center(
+                                      child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                          color: AppColors.primaryCrimson),
+                                    ),
                                   ),
                                 ),
-                              ),
-                              Positioned(
-                                top: 16,
-                                right: 16,
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                                  decoration: BoxDecoration(
-                                    color: Colors.black.withOpacity(0.7),
-                                    borderRadius: BorderRadius.circular(30),
-                                    border: Border.all(color: medalColor.withOpacity(0.5), width: 1.5),
-                                  ),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Icon(Icons.stars_rounded, color: medalColor, size: 16),
-                                      const SizedBox(width: 6),
-                                      MainText(
-                                        item.championType ?? '',
-                                        color: Colors.white,
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.w900,
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-
-                        Padding(
-                          padding: const EdgeInsets.all(24),
-                          child: Column(
-                            children: [
-                              Row(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Container(
-                                    padding: const EdgeInsets.all(16),
+                                Positioned(
+                                  top: 16,
+                                  right: 16,
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 14, vertical: 8),
                                     decoration: BoxDecoration(
-                                      shape: BoxShape.circle,
-                                      color: medalColor.withOpacity(0.12),
-                                      border: Border.all(color: medalColor.withOpacity(0.2), width: 1),
+                                      color: Colors.black.withOpacity(0.7),
+                                      borderRadius: BorderRadius.circular(30),
+                                      border: Border.all(
+                                          color: medalColor.withOpacity(0.5),
+                                          width: 1.5),
                                     ),
-                                    child: Icon(
-                                      _getMedalIcon(item.championType),
-                                      color: medalColor,
-                                      size: 32,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 16),
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
                                       children: [
+                                        Icon(Icons.stars_rounded,
+                                            color: medalColor, size: 16),
+                                        const SizedBox(width: 6),
                                         MainText(
-                                          item.title,
-                                          fontSize: 20,
+                                          item.championType ?? '',
+                                          color: Colors.white,
+                                          fontSize: 12,
                                           fontWeight: FontWeight.w900,
-                                          color: isDark ? Colors.white : Colors.black87,
-                                          maxLines: 2,
-                                          overflow: TextOverflow.ellipsis,
-                                        ),
-                                        const SizedBox(height: 12),
-                                        Row(
-                                          children: [
-                                            Icon(Icons.person_rounded, size: 14, color: AppColors.primaryCrimson.withOpacity(0.6)),
-                                            const SizedBox(width: 6),
-                                            Expanded(
-                                              child: MainText(
-                                                item.participantName ?? '',
-                                                fontSize: 14,
-                                                fontWeight: FontWeight.w700,
-                                                color: isDark ? Colors.white54 : Colors.grey[600],
-                                                maxLines: 1,
-                                                overflow: TextOverflow.ellipsis,
-                                              ),
-                                            ),
-                                          ],
                                         ),
                                       ],
                                     ),
                                   ),
-                                ],
-                              ),
-                              const SizedBox(height: 16),
-                              Row(
-                                children: [
-                                  if (item.date != null)
-                                    Expanded(
-                                      child: _InfoBadge(
-                                        icon: Icons.calendar_today_rounded,
-                                        text: DateFormat('d MMMM yyyy', 'ar').format(item.date!),
-                                        isDark: isDark,
-                                      ),
-                                    ),
-                                  if (item.date != null && item.venue != null && item.venue!.isNotEmpty)
-                                    const SizedBox(width: 12),
-                                  if (item.venue != null && item.venue!.isNotEmpty)
-                                    Expanded(
-                                      child: _InfoBadge(
-                                        icon: Icons.location_on_rounded,
-                                        text: item.venue!,
-                                        isDark: isDark,
-                                      ),
-                                    ),
-                                ],
-                              ),
-                            ],
+                                ),
+                              ],
+                            ),
                           ),
                         ),
-                      ],
-                    ),
+                      Padding(
+                        padding: const EdgeInsets.all(24),
+                        child: Column(
+                          children: [
+                            Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.all(16),
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    color: medalColor.withOpacity(0.12),
+                                    border: Border.all(
+                                        color: medalColor.withOpacity(0.2),
+                                        width: 1),
+                                  ),
+                                  child: Icon(
+                                    _getMedalIcon(item.championType),
+                                    color: medalColor,
+                                    size: 32,
+                                  ),
+                                ),
+                                const SizedBox(width: 16),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      MainText(
+                                        item.title,
+                                        fontSize: 20,
+                                        fontWeight: FontWeight.w900,
+                                        color: isDark
+                                            ? Colors.white
+                                            : Colors.black87,
+                                        maxLines: 2,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                      const SizedBox(height: 12),
+                                      Row(
+                                        children: [
+                                          Icon(Icons.person_rounded,
+                                              size: 14,
+                                              color: AppColors.primaryCrimson
+                                                  .withOpacity(0.6)),
+                                          const SizedBox(width: 6),
+                                          Expanded(
+                                            child: MainText(
+                                              item.participantName ?? '',
+                                              fontSize: 14,
+                                              fontWeight: FontWeight.w700,
+                                              color: isDark
+                                                  ? Colors.white54
+                                                  : Colors.grey[600],
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 16),
+                            Row(
+                              children: [
+                                if (item.date != null)
+                                  Expanded(
+                                    child: _InfoBadge(
+                                      icon: Icons.calendar_today_rounded,
+                                      text: DateFormat('d MMMM yyyy', 'ar')
+                                          .format(item.date!),
+                                      isDark: isDark,
+                                    ),
+                                  ),
+                                if (item.date != null &&
+                                    item.venue != null &&
+                                    item.venue!.isNotEmpty)
+                                  const SizedBox(width: 12),
+                                if (item.venue != null &&
+                                    item.venue!.isNotEmpty)
+                                  Expanded(
+                                    child: _InfoBadge(
+                                      icon: Icons.location_on_rounded,
+                                      text: item.venue!,
+                                      isDark: isDark,
+                                    ),
+                                  ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ),
@@ -622,10 +659,20 @@ class AchievementDetailScreen extends StatelessWidget {
                 fontWeight: FontWeight.w900,
                 color: Colors.white,
               ),
-              background: Hero(
-                tag: 'achievement_${item.id}',
-                child: Stack(
-                  fit: StackFit.expand,
+              background: GestureDetector(
+                onTap: () {
+                  if (item.imageUrl != null && item.imageUrl!.isNotEmpty) {
+                    FullScreenImageViewer.open(
+                      context,
+                      CachedNetworkImageProvider(item.imageUrl!),
+                      'achievement_${item.id}',
+                    );
+                  }
+                },
+                child: Hero(
+                  tag: 'achievement_${item.id}',
+                  child: Stack(
+                    fit: StackFit.expand,
                   children: [
                     if (item.imageUrl != null && item.imageUrl!.isNotEmpty)
                       CachedNetworkImage(
@@ -666,7 +713,8 @@ class AchievementDetailScreen extends StatelessWidget {
                         ),
                       ),
                     ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -800,7 +848,7 @@ class AchievementDetailScreen extends StatelessWidget {
                         ),
                         const SizedBox(height: 14),
                         MainText(
-                          item.venue ?? '?? ???? ??? ???? ???? ???????.',
+                          item.venue ?? 'لا يوجد تفاصيل عن مكان إقامة الفعالية.',
                           fontSize: 14,
                           fontWeight: FontWeight.w700,
                           color: isDark ? Colors.white70 : Colors.grey[700],
@@ -1004,6 +1052,3 @@ class SparklePainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
 }
-
-
-

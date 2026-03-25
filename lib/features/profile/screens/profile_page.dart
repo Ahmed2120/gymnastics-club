@@ -11,6 +11,7 @@ import '../profile_controller/child_riverpod.dart';
 import '../../../core/theme/theme_provider.dart';
 import '../../auth/auth_provider.dart';
 import 'package:gymnastics_club/core/utils/extensions/size_extensions.dart';
+import '../../../widgets/full_screen_viewer.dart';
 
 class ProfilePage extends ConsumerStatefulWidget {
   const ProfilePage({super.key});
@@ -102,15 +103,28 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                           color: isDark ? AppColors.darkBackground : Colors.white,
                           shape: BoxShape.circle,
                         ),
-                        child: ClipOval(
-                          child: AppNetworkAvatar(
-                            url: activeChild?.imageUrl,
-                            size: 140,
-                            errorWidget: Image.asset(
-                              'assets/images/defualt-user.png',
-                              fit: BoxFit.cover,
-                              width: 140,
-                              height: 140,
+                        child: GestureDetector(
+                          onTap: () {
+                            final child = activeChild;
+                            if (child?.imageUrl != null) {
+                              FullScreenImageViewer.open(
+                                context,
+                                NetworkImage(child!.imageUrl!),
+                                'main_profile_avatar',
+                              );
+                            }
+                          },
+                          child: Hero(
+                            tag: 'main_profile_avatar',
+                            child: AppNetworkAvatar(
+                              url: activeChild?.imageUrl,
+                              size: 140,
+                              errorWidget: Image.asset(
+                                'assets/images/defualt-user.png',
+                                fit: BoxFit.cover,
+                                width: 140,
+                                height: 140,
+                              ),
                             ),
                           ),
                         ),
@@ -289,11 +303,6 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                       child: AppNetworkAvatar(
                         url: child.imageUrl,
                         size: 68,
-                        errorWidget: Icon(
-                          Icons.person,
-                          size: 38,
-                          color: isDark ? Colors.white30 : Colors.grey,
-                        ),
                       ),
                     ),
                   ),

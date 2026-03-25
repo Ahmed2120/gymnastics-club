@@ -95,7 +95,10 @@ class _PulsingAvatarState extends State<PulsingAvatar>
                         : null,
                   ),
                   child: widget.imageUrl == null || widget.imageUrl!.isEmpty
-                      ? Icon(Icons.person_rounded, size: widget.radius, color: Colors.white30)
+                      ? Image.asset(
+                          'assets/images/defualt-user.png',
+                          fit: BoxFit.cover,
+                        )
                       : null,
                 ),
               ),
