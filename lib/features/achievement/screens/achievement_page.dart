@@ -14,6 +14,7 @@ import '../widgets/achievement_stats_hud.dart';
 import '../widgets/pulsing_avatar.dart';
 import '../../../widgets/custom_app_bar_button.dart';
 import '../../../widgets/full_screen_viewer.dart';
+import '../../../core/costants/app_assets.dart';
 
 class AchievementPage extends ConsumerStatefulWidget {
   const AchievementPage({super.key});
@@ -406,12 +407,14 @@ class _AchievementCardState extends State<_AchievementCard>
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      if (hasImage)
-                        GestureDetector(
+                      GestureDetector(
                           onTap: () {
                             FullScreenImageViewer.open(
                               context,
-                              CachedNetworkImageProvider(item.imageUrl!),
+                              hasImage
+                                  ? CachedNetworkImageProvider(item.imageUrl!)
+                                  : const AssetImage(
+                                      AppAssets.achievementPlaceholder),
                               'achievement_${item.id}',
                             );
                           },
@@ -419,23 +422,37 @@ class _AchievementCardState extends State<_AchievementCard>
                             tag: 'achievement_${item.id}',
                             child: Stack(
                               children: [
-                                CachedNetworkImage(
-                                  imageUrl: item.imageUrl!,
-                                  height: 200,
-                                  width: double.infinity,
-                                  fit: BoxFit.cover,
-                                  placeholder: (context, url) => Container(
+                                if (hasImage)
+                                  CachedNetworkImage(
+                                    imageUrl: item.imageUrl!,
                                     height: 200,
-                                    color: isDark
-                                        ? const Color(0xFF1E1414)
-                                        : Colors.grey[100],
-                                    child: const Center(
-                                      child: CircularProgressIndicator(
-                                          strokeWidth: 2,
-                                          color: AppColors.primaryCrimson),
+                                    width: double.infinity,
+                                    fit: BoxFit.cover,
+                                    placeholder: (context, url) => Container(
+                                      height: 200,
+                                      color: isDark
+                                          ? const Color(0xFF1E1414)
+                                          : Colors.grey[100],
+                                      child: const Center(
+                                        child: CircularProgressIndicator(
+                                            strokeWidth: 2,
+                                            color: AppColors.primaryCrimson),
+                                      ),
                                     ),
+                                    errorWidget: (context, url, dynamic error) => Image.asset(
+                                      AppAssets.achievementPlaceholder,
+                                      height: 200,
+                                      width: double.infinity,
+                                      fit: BoxFit.cover,
+                                    ),
+                                  )
+                                else
+                                  Image.asset(
+                                    AppAssets.achievementPlaceholder,
+                                    height: 200,
+                                    width: double.infinity,
+                                    fit: BoxFit.cover,
                                   ),
-                                ),
                                 Positioned(
                                   top: 16,
                                   right: 16,
@@ -661,58 +678,71 @@ class AchievementDetailScreen extends StatelessWidget {
               ),
               background: GestureDetector(
                 onTap: () {
-                  if (item.imageUrl != null && item.imageUrl!.isNotEmpty) {
-                    FullScreenImageViewer.open(
-                      context,
-                      CachedNetworkImageProvider(item.imageUrl!),
-                      'achievement_${item.id}',
-                    );
-                  }
+                  final hasImage = item.imageUrl != null && item.imageUrl!.isNotEmpty;
+                  FullScreenImageViewer.open(
+                    context,
+                    hasImage
+                        ? CachedNetworkImageProvider(item.imageUrl!)
+                        : const AssetImage(AppAssets.achievementPlaceholder),
+                    'achievement_${item.id}',
+                  );
                 },
                 child: Hero(
                   tag: 'achievement_${item.id}',
                   child: Stack(
                     fit: StackFit.expand,
-                  children: [
-                    if (item.imageUrl != null && item.imageUrl!.isNotEmpty)
-                      CachedNetworkImage(
-                        imageUrl: item.imageUrl!,
-                        fit: BoxFit.cover,
-                      ),
-                    Container(
-                      decoration: const BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
-                          colors: [Colors.transparent, Colors.black54],
+                    children: [
+                      if (item.imageUrl != null && item.imageUrl!.isNotEmpty)
+                        CachedNetworkImage(
+                          imageUrl: item.imageUrl!,
+                          fit: BoxFit.cover,
+                          errorWidget: (context, url, dynamic error) => Image.asset(
+                            AppAssets.achievementPlaceholder,
+                            fit: BoxFit.cover,
+                          ),
+                        )
+                      else
+                        Image.asset(
+                          AppAssets.achievementPlaceholder,
+                          fit: BoxFit.cover,
+                        ),
+                      Container(
+                        decoration: const BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                            colors: [Colors.transparent, Colors.black54],
+                          ),
                         ),
                       ),
-                    ),
-                    Positioned(
-                      top: 100,
-                      right: 20,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                        decoration: BoxDecoration(
-                          color: Colors.black.withOpacity(0.55),
-                          borderRadius: BorderRadius.circular(30),
-                          border: Border.all(color: medalColor.withOpacity(0.5), width: 1.2),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Icon(Icons.stars_rounded, color: Colors.white, size: 16),
-                            const SizedBox(width: 6),
-                            MainText(
-                              item.championType ?? '',
-                              color: Colors.white,
-                              fontSize: 12,
-                              fontWeight: FontWeight.w800,
-                            ),
-                          ],
+                      Positioned(
+                        top: 100,
+                        right: 20,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 14, vertical: 8),
+                          decoration: BoxDecoration(
+                            color: Colors.black.withOpacity(0.55),
+                            borderRadius: BorderRadius.circular(30),
+                            border: Border.all(
+                                color: medalColor.withOpacity(0.5), width: 1.2),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(Icons.stars_rounded,
+                                  color: Colors.white, size: 16),
+                              const SizedBox(width: 6),
+                              MainText(
+                                item.championType ?? '',
+                                color: Colors.white,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ],
+                          ),
                         ),
                       ),
-                    ),
                     ],
                   ),
                 ),

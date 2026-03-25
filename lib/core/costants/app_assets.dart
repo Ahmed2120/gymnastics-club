@@ -1,8 +1,9 @@
 class AppAssets {
   static const String logo = 'assets/images/logo.png';
-  static const String userPlaceholder = 'assets/images/user_placeholder.png';
+  static const String userPlaceholder = 'assets/images/defualt-user.png';
   static const String achievement = 'assets/images/achievement.png';
   static const String newsPlaceholder = 'assets/images/news_placeholder.png';
+  static const String achievementPlaceholder = 'assets/images/achievement_placeholder.png';
 }
 
 class AppAssetsSvg {

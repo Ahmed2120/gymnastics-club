@@ -170,6 +170,11 @@ class _FullScreenImageViewerState extends State<FullScreenImageViewer>
                       child: Image(
                         image: widget.imageProvider,
                         fit: BoxFit.contain,
+                        errorBuilder: (context, error, stackTrace) =>
+                            const Center(
+                          child: Icon(Icons.broken_image_rounded,
+                              size: 64, color: Colors.white24),
+                        ),
                       ),
                     ),
                   ),
