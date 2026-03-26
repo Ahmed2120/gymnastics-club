@@ -2,6 +2,13 @@
 
 This file tracks all features added, edited, or removed in the Gymnastics Club project.
 
+## [2026-03-26] News Details Bottom Sheet
+- **Feature**: News Details Bottom Sheet
+- **Status**: Added
+- **Description**: News cards now truncate long content and show "اقرأ المزيد" instead of expanding inline. Tapping opens a premium draggable bottom sheet (`news_details_bottom_sheet.dart`) displaying the full news details (image, type badge, title, date, full content, and like button). Supports light and dark themes.
+- **Files Added**: `lib/features/home/widgets/news_details_bottom_sheet.dart`
+- **Files Modified**: `lib/features/home/screens/home.dart` – replaced `_ExpandedText` with `_NewsContentPreview`
+
 ## [2026-03-19] App Logger Implementation
 - **Feature**: Centralized Logging System
 - **Description**: Created `AppLogger` class in `lib/core/utils/app_logger.dart` to handle all app logs.

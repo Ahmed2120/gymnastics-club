@@ -101,6 +101,17 @@ class DateConverter {
     return '';
   }
 
+  static String formatNewsDate(String? dateTimeStr) {
+    if (dateTimeStr == null || dateTimeStr.isEmpty) return '';
+    try {
+      DateTime date = DateTime.parse(dateTimeStr).toLocal();
+      // Returns e.g., '26 مارس 2026'
+      return DateFormat('d MMMM yyyy', 'ar').format(date);
+    } catch (e) {
+      return dateTimeStr;
+    }
+  }
+
   static String dateToReadableDayAndMonth(String? dateTime) {
     if (dateTime != null) {
       final date = DateTime.parse(dateTime);

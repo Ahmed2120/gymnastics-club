@@ -18,6 +18,7 @@ import '../widgets/achievement_spotlight.dart';
 import '../widgets/motivation_card.dart';
 import '../widgets/animated_like_button.dart';
 import '../../../widgets/full_screen_viewer.dart';
+import '../widgets/news_details_bottom_sheet.dart';
 
 class HomePage extends ConsumerStatefulWidget {
   const HomePage({super.key});
@@ -89,10 +90,8 @@ class _HomePageState extends ConsumerState<HomePage> {
           final childState = ref.watch(childRiverpod);
           final user = childState.selectedChild;
           final newsList = newsState.newsList;
-          final firstNews = newsList.isNotEmpty ? newsList.first : null;
 
-          bool isImportant(NewsModel? news) {
-            if (news == null) return false;
+          bool isImportant(NewsModel news) {
             final type = news.type?.toLowerCase() ?? '';
             return type == 'warning' ||
                 type == 'تنبيه مهم' ||
@@ -100,7 +99,9 @@ class _HomePageState extends ConsumerState<HomePage> {
                 type == 'تعديل جدول';
           }
 
-          final showFeaturedAtTop = isImportant(firstNews);
+          // Search the entire list for the most recent important news
+          final featuredNews = newsList.where((news) => isImportant(news)).firstOrNull;
+          final showFeaturedAtTop = featuredNews != null;
 
           return RefreshIndicator(
             color: AppColors.primaryColor,
@@ -249,7 +250,7 @@ class _HomePageState extends ConsumerState<HomePage> {
                     padding: const EdgeInsets.fromLTRB(24, 32, 24, 0),
                     sliver: SliverToBoxAdapter(
                       child: _TapWrapper(
-                        child: _buildLargeNewsCard(firstNews!, isDark, isFeatured: true),
+                        child: _buildLargeNewsCard(featuredNews, isDark, isFeatured: true),
                       ),
                     ),
                   ),
@@ -350,6 +351,7 @@ class _HomePageState extends ConsumerState<HomePage> {
 
     return Container(
       width: isFeatured ? double.infinity : 320,
+      height: 360,
       margin: EdgeInsets.only(bottom: isFeatured ? 0 : 12),
       decoration: BoxDecoration(
         color: isDark ? AppColors.darkSurface : Colors.white,
@@ -368,11 +370,13 @@ class _HomePageState extends ConsumerState<HomePage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // ── Image Section ──
-            if (hasImage)
-              Stack(
+            Expanded(
+              child: Stack(
+                fit: StackFit.expand,
                 children: [
                   GestureDetector(
                     onTap: () {
+                      if (!hasImage) return;
                       FullScreenImageViewer.open(
                         context,
                         CachedNetworkImageProvider(news.imageUrl!),
@@ -381,18 +385,22 @@ class _HomePageState extends ConsumerState<HomePage> {
                     },
                     child: Hero(
                       tag: 'news_${news.id}',
-                      child: CachedNetworkImage(
-                        imageUrl: news.imageUrl!,
-                        height: 180,
-                        width: double.infinity,
-                        fit: BoxFit.cover,
-                        errorWidget: (context, url, error) => Image.asset(
-                          AppAssets.newsPlaceholder,
-                          height: 180,
-                          width: double.infinity,
-                          fit: BoxFit.cover,
-                        ),
-                      ),
+                      child: hasImage
+                          ? CachedNetworkImage(
+                              imageUrl: news.imageUrl!,
+                              width: double.infinity,
+                              fit: BoxFit.cover,
+                              errorWidget: (context, url, error) => Image.asset(
+                                AppAssets.newsPlaceholder,
+                                width: double.infinity,
+                                fit: BoxFit.cover,
+                              ),
+                            )
+                          : Image.asset(
+                              AppAssets.newsPlaceholder,
+                              width: double.infinity,
+                              fit: BoxFit.cover,
+                            ),
                     ),
                   ),
                   // Heart Overlay (Top Left)
@@ -443,6 +451,7 @@ class _HomePageState extends ConsumerState<HomePage> {
                     ),
                 ],
               ),
+            ),
 
             // ── Content Section ──
             Padding(
@@ -471,7 +480,7 @@ class _HomePageState extends ConsumerState<HomePage> {
                   ),
                   const SizedBox(height: 12),
                   // Snippet + Read More
-                  _ExpandedText(text: news.newsContent, isDark: isDark),
+                  _NewsContentPreview(news: news, isDark: isDark),
                 ],
               ),
             ),
@@ -491,46 +500,52 @@ class _HomePageState extends ConsumerState<HomePage> {
   }
 }
 
-// ── Expandable text with "اقرأ المزيد" ──
-class _ExpandedText extends StatefulWidget {
-  final String text;
+// ── Truncated text preview with "اقرأ المزيد" that opens bottom sheet ──
+class _NewsContentPreview extends StatelessWidget {
+  final NewsModel news;
   final bool isDark;
 
-  const _ExpandedText({required this.text, required this.isDark});
-
-  @override
-  State<_ExpandedText> createState() => _ExpandedTextState();
-}
-
-class _ExpandedTextState extends State<_ExpandedText> {
-  bool isExpanded = false;
+  const _NewsContentPreview({required this.news, required this.isDark});
 
   @override
   Widget build(BuildContext context) {
-    const int threshold = 120;
-    final isLong = widget.text.length > threshold;
+    const int threshold = 75;
+    final isLong = news.newsContent.length > threshold;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         MainText(
-          isLong && !isExpanded
-              ? '${widget.text.substring(0, threshold)}...'
-              : widget.text,
+          isLong
+              ? '${news.newsContent.substring(0, threshold)}...'
+              : news.newsContent,
           fontSize: 15,
-          color: widget.isDark ? Colors.grey[400] : const Color(0xFF555555),
+          color: isDark ? Colors.grey[400] : const Color(0xFF555555),
           height: 1.6,
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
         ),
         if (isLong)
           GestureDetector(
-            onTap: () => setState(() => isExpanded = !isExpanded),
+            onTap: () => NewsDetailsBottomSheet.show(context, news),
             child: Padding(
               padding: const EdgeInsets.only(top: 4.0),
-              child: MainText(
-                isExpanded ? 'عرض أقل' : 'اقرأ المزيد',
-                color: AppColors.primaryColor,
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  MainText(
+                    'اقرأ المزيد',
+                    color: AppColors.primaryColor,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                  ),
+                  const SizedBox(width: 4),
+                  Icon(
+                    Icons.arrow_downward_rounded,
+                    size: 14,
+                    color: AppColors.primaryColor,
+                  ),
+                ],
               ),
             ),
           ),
