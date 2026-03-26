@@ -27,6 +27,10 @@ class ChildModel {
     final gid = json['group']?.toString() ?? '';
     final gname = json['group_name']?.toString() ?? '';
 
+    // Handle both flat (from RPC) and nested (from .select('*, parents(...)'))
+    final pName = json['parent_name'] ?? json['parents']?['name'];
+    final pEmail = json['parent_email'] ?? json['parents']?['email'];
+
     return ChildModel(
       id: json['id'],
       name: json['name'] ?? '',
@@ -36,8 +40,8 @@ class ChildModel {
       groupName: gname,
       level: json['level'] ?? '',
       imageUrl: json['image_url'],
-      parentName: json['parent_name'],
-      parentEmail: json['parent_email'],
+      parentName: pName,
+      parentEmail: pEmail,
     );
   }
 
@@ -51,8 +55,7 @@ class ChildModel {
       "group_name": groupName,
       "level": level,
       "image_url": imageUrl,
-      "parent_name": parentName,
-      "parent_email": parentEmail,
+      // parent_name and parent_email are no longer stored in 'children' table
     };
   }
 

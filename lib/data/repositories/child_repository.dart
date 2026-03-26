@@ -30,7 +30,7 @@ class ChildRepository {
     try {
       final response = await _client
           .from('children')
-          .select()
+          .select('*, parents(name, email)')
           .eq('id', id)
           .single();
       return ChildModel.fromJson(response);

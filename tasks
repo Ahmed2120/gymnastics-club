@@ -2,6 +2,8 @@
 
 - add default image for news that haven't image ✅
 
-- edit children design in profile page
+- edit children design in profile page ✅
 
 - compress images in dashboard for performance
+
+- validation when adding new child if adding used phone with new email or name to give an error and show on the error if you want to get it's data or show suggestions when entering phone when select existing phone it get parent data

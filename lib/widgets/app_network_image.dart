@@ -61,12 +61,14 @@ class AppNetworkAvatar extends StatelessWidget {
   final String? url;
   final double size;
   final Widget? errorWidget;
+  final BorderRadius? borderRadius;
 
   const AppNetworkAvatar({
     super.key,
     this.url,
     this.size = 56,
     this.errorWidget,
+    this.borderRadius,
   });
 
   @override
@@ -79,20 +81,42 @@ class AppNetworkAvatar extends StatelessWidget {
           fit: BoxFit.cover,
         );
 
-    if (url == null || url!.isEmpty) return ClipOval(child: fallback);
+    final isCircular = borderRadius == null;
 
-    return ClipOval(
-      child: CachedNetworkImage(
-        imageUrl: url!,
-        width: size,
-        height: size,
-        fit: BoxFit.cover,
-        memCacheWidth: size.toInt(),
-        memCacheHeight: size.toInt(),
-        placeholder: (context, _) => _Shimmer(width: size, height: size, circular: true),
-        errorWidget: (context, url, _) => fallback,
-      ),
-    );
+    if (url == null || url!.isEmpty) {
+      return isCircular
+          ? ClipOval(child: fallback)
+          : ClipRRect(borderRadius: borderRadius!, child: fallback);
+    }
+
+    return isCircular
+        ? ClipOval(
+            child: CachedNetworkImage(
+              imageUrl: url!,
+              width: size,
+              height: size,
+              fit: BoxFit.cover,
+              memCacheWidth: size.toInt(),
+              memCacheHeight: size.toInt(),
+              placeholder: (context, _) =>
+                  _Shimmer(width: size, height: size, circular: true),
+              errorWidget: (context, url, _) => fallback,
+            ),
+          )
+        : ClipRRect(
+            borderRadius: borderRadius!,
+            child: CachedNetworkImage(
+              imageUrl: url!,
+              width: size,
+              height: size,
+              fit: BoxFit.cover,
+              memCacheWidth: size.toInt(),
+              memCacheHeight: size.toInt(),
+              placeholder: (context, _) =>
+                  _Shimmer(width: size, height: size, borderRadius: borderRadius),
+              errorWidget: (context, url, _) => fallback,
+            ),
+          );
   }
 }
 
@@ -100,8 +124,14 @@ class _Shimmer extends StatelessWidget {
   final double? width;
   final double? height;
   final bool circular;
+  final BorderRadius? borderRadius;
 
-  const _Shimmer({this.width, this.height, this.circular = false});
+  const _Shimmer({
+    this.width,
+    this.height,
+    this.circular = false,
+    this.borderRadius,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -114,6 +144,7 @@ class _Shimmer extends StatelessWidget {
         decoration: BoxDecoration(
           color: Colors.grey.shade300,
           shape: circular ? BoxShape.circle : BoxShape.rectangle,
+          borderRadius: borderRadius,
         ),
       ),
     );

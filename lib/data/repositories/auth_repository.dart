@@ -50,10 +50,13 @@ class AuthRepository {
 
   Future<void> updatePasswordInTable(String phone, String newPassword) async {
     try {
-      await _client
-          .from('parents')
-          .update({'password': newPassword})
-          .eq('phone', phone);
+      final bool success = await _client.rpc('api_update_parent_password', params: {
+        'p_phone': phone,
+        'p_password': newPassword,
+      });
+      if (!success) {
+        throw Exception('فشل تحديث كلمة المرور');
+      }
     } catch (e) {
       AppLogger.log('Error updating password: $e');
       rethrow;
@@ -103,7 +106,6 @@ class AuthRepository {
     }
   }
 
-  /// Finds the parent by their email address and updates the password.
   Future<void> updatePasswordByEmail(String email, String newPassword) async {
     try {
       final parent = await _client
@@ -116,10 +118,16 @@ class AuthRepository {
         throw Exception('لم يتم العثور على حساب بهذا البريد الإلكتروني');
       }
 
-      await _client
-          .from('parents')
-          .update({'password': newPassword})
-          .eq('email', email);
+      final String phone = parent['phone'];
+
+      final bool success = await _client.rpc('api_update_parent_password', params: {
+        'p_phone': phone,
+        'p_password': newPassword,
+      });
+
+      if (!success) {
+        throw Exception('فشل تحديث كلمة المرور');
+      }
     } catch (e) {
       AppLogger.log('Error updating password by email: $e');
       rethrow;

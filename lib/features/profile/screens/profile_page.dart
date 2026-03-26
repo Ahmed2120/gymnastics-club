@@ -257,75 +257,107 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
 
   Widget _buildChildrenSection(List children, int? selectedId, bool isDark) {
     return SizedBox(
-      height: 160,
+      height: 170, // Slightly increased height for better spacing
       child: ListView.builder(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12), // Matching the title padding
         scrollDirection: Axis.horizontal,
-        reverse: true, // RTL support for the list
+        reverse: false, // In RTL (Arabic) mode, false starts from the right
+        physics: const BouncingScrollPhysics(),
         itemCount: children.length,
         itemBuilder: (context, index) {
           final child = children[index];
           final isSelected = child.id == selectedId;
 
-          return GestureDetector(
-            onTap: () {
-              ref.read(childRiverpod.notifier).selectChild(child.id);
-            },
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 10.0),
-              child: Column(
-                children: [
-                  Container(
-                    width: 76,
-                    height: 76,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(22),
-                      border: Border.all(
-                        color: isSelected
-                            ? AppColors.primaryCrimson
-                            : (isDark ? Colors.white.withOpacity(0.05) : const Color(0xFFEEEEEE)),
-                        width: isSelected ? 4.5 : 2,
-                      ),
-                      color: isSelected
-                          ? (isDark ? AppColors.darkSurface : AppColors.primaryCrimson.withOpacity(0.05))
-                          : (isDark ? AppColors.darkItem : const Color(0xFFF5F5F5)),
-                      boxShadow: isSelected && isDark ? [
-                        BoxShadow(
-                          color: AppColors.primaryCrimson.withOpacity(0.35),
-                          blurRadius: 18,
-                          spreadRadius: 4,
-                        )
-                      ] : null,
+          return _buildChildItem(child, isSelected, isDark);
+        },
+      ),
+    );
+  }
+
+  Widget _buildChildItem(dynamic child, bool isSelected, bool isDark) {
+    return GestureDetector(
+      onTap: () {
+        ref.read(childRiverpod.notifier).selectChild(child.id);
+      },
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+        margin: const EdgeInsets.symmetric(horizontal: 10.0),
+        child: Column(
+          children: [
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 300),
+              width: isSelected ? 82 : 76,
+              height: isSelected ? 82 : 76,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(24),
+                gradient: isSelected ? AppColors.energyGradient : null,
+                color: isSelected 
+                    ? null 
+                    : (isDark ? Colors.white.withOpacity(0.05) : Colors.white),
+                border: Border.all(
+                  color: isSelected 
+                      ? Colors.transparent 
+                      : (isDark ? Colors.white10 : const Color(0xFFEEEEEE)),
+                  width: 2,
+                ),
+                boxShadow: [
+                  if (isSelected)
+                    BoxShadow(
+                      color: AppColors.primaryCrimson.withOpacity(isDark ? 0.35 : 0.25),
+                      blurRadius: 18,
+                      spreadRadius: 2,
+                      offset: const Offset(0, 4),
+                    )
+                  else
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.03),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
                     ),
-                    padding: const EdgeInsets.all(4),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(18),
-                      child: AppNetworkAvatar(
-                        url: child.imageUrl,
-                        size: 68,
-                      ),
-                    ),
-                  ),
-                  10.ph,
-                  SizedBox(
-                    width: 85,
-                    child: MainText(
-                      child.name, // Show whole name
-                      fontSize: 13,
-                      fontWeight: isSelected ? FontWeight.w900 : FontWeight.w600,
-                      color: isSelected
-                          ? (isDark ? Colors.white : AppColors.primaryCrimson)
-                          : (isDark ? Colors.white54 : const Color(0xFF676E7D)),
-                      textAlign: TextAlign.center,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
                 ],
               ),
+              padding: const EdgeInsets.all(4),
+              child: Container(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(20),
+                  color: isDark ? AppColors.darkBackground : Colors.white,
+                ),
+                padding: const EdgeInsets.all(2),
+                child: AppNetworkAvatar(
+                  url: child.imageUrl,
+                  size: 70,
+                  borderRadius: BorderRadius.circular(18),
+                  errorWidget: Image.asset(
+                    'assets/images/defualt-user.png',
+                    fit: BoxFit.cover,
+                  ),
+                ),
+              ),
             ),
-          );
-        },
+            12.ph,
+            AnimatedDefaultTextStyle(
+              duration: const Duration(milliseconds: 300),
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: isSelected ? FontWeight.w900 : FontWeight.w600,
+                color: isSelected
+                    ? (isDark ? Colors.white : AppColors.primaryCrimson)
+                    : (isDark ? Colors.white54 : const Color(0xFF676E7D)),
+                fontFamily: 'Inter', // Assuming Inter is the main font
+              ),
+              child: SizedBox(
+                width: 90,
+                child: MainText(
+                  child.name,
+                  textAlign: TextAlign.center,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
