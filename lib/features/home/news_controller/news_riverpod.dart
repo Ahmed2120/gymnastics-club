@@ -21,12 +21,12 @@ class NewsRiverpod extends StateNotifier<NewsState> {
 
   final _newsRepositories = getIT<NewsRepositories>();
 
-  Future<void> getNews({List<String>? groupIds, bool force = false}) async {
+  Future<void> getNews({List<String>? groupIds, List<int>? childIds, bool force = false}) async {
     if (state.isLoading && !force) return;
     state = state.copyWith(isLoading: true, currentPage: 1, hasMore: true);
     try {
       final phone = ref.read(authProvider).phoneNumber;
-      final news = await _newsRepositories.getNews(page: 1, groupIds: groupIds, phone: phone);
+      final news = await _newsRepositories.getNews(page: 1, groupIds: groupIds, childIds: childIds, phone: phone);
       // Sort news: Priority first (higher number = higher priority), then by date
       news.sort((a, b) {
         final pCompare = (b.priority ?? 0).compareTo(a.priority ?? 0);
@@ -46,7 +46,7 @@ class NewsRiverpod extends StateNotifier<NewsState> {
     }
   }
 
-  Future<void> loadMoreNews({List<String>? groupIds}) async {
+  Future<void> loadMoreNews({List<String>? groupIds, List<int>? childIds}) async {
     if (state.isLoadingMore || !state.hasMore) return;
 
     state = state.copyWith(isLoadingMore: true);
@@ -55,6 +55,7 @@ class NewsRiverpod extends StateNotifier<NewsState> {
       final news = await _newsRepositories.getNews(
         page: state.currentPage,
         groupIds: groupIds,
+        childIds: childIds,
         phone: phone,
       );
       state = state.copyWith(
@@ -85,6 +86,7 @@ class NewsRiverpod extends StateNotifier<NewsState> {
           newsDuration: currentNews.newsDuration,
           imageUrl: currentNews.imageUrl,
           priority: currentNews.priority,
+          childId: currentNews.childId,
           likesCount: currentNews.isLiked ? currentNews.likesCount - 1 : currentNews.likesCount + 1,
           isLiked: !currentNews.isLiked,
         );
@@ -118,6 +120,7 @@ class NewsRiverpod extends StateNotifier<NewsState> {
               newsDuration: currentNews.newsDuration,
               imageUrl: currentNews.imageUrl,
               priority: currentNews.priority,
+              childId: currentNews.childId,
               likesCount: serverLikesCount,
               isLiked: serverIsLiked,
             );

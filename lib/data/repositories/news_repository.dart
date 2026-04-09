@@ -11,6 +11,7 @@ class NewsRepositories {
     required int page,
     int limit = 10,
     List<String>? groupIds,
+    List<int>? childIds,
     String? phone,
   }) async {
     try {
@@ -21,6 +22,7 @@ class NewsRepositories {
         params: {
           'p_page': page,
           'p_group_ids': groupIds, // null = global news only
+          'p_child_ids': childIds,
           'p_phone': phone,
         },
       );

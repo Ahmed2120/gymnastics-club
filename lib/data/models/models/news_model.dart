@@ -8,6 +8,7 @@ class NewsModel {
   final String publishDate;
   final String? imageUrl;
   final int? priority;
+  final String? childId;
   final int likesCount;
   final bool isLiked;
 
@@ -21,6 +22,7 @@ class NewsModel {
     required this.newsDuration,
     this.imageUrl,
     this.priority,
+    this.childId,
     this.likesCount = 0,
     this.isLiked = false,
   });
@@ -37,6 +39,7 @@ class NewsModel {
       newsDuration: json['news_duration'] as String? ?? '',
       imageUrl: json['image_url'] as String?,
       priority: (json['priority'] as num?)?.toInt(),
+      childId: json['child_id']?.toString(),
       likesCount: (json['likes_count'] as num?)?.toInt() ?? 0,
       isLiked: json['is_liked_by_me'] ?? false,
     );
@@ -54,6 +57,7 @@ class NewsModel {
       'publish_date': publishDate,
       'image_url': imageUrl,
       'priority': priority,
+      'child_id': childId,
       'likes_count': likesCount,
       'is_liked_by_me': isLiked,
     };

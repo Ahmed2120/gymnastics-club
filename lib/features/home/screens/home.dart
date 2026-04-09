@@ -19,6 +19,7 @@ import '../widgets/motivation_card.dart';
 import '../widgets/animated_like_button.dart';
 import '../../../widgets/full_screen_viewer.dart';
 import '../widgets/news_details_bottom_sheet.dart';
+import '../widgets/personal_news_card.dart'; // File name matches but class is InterestingAlertCard
 
 class HomePage extends ConsumerStatefulWidget {
   const HomePage({super.key});
@@ -55,7 +56,12 @@ class _HomePageState extends ConsumerState<HomePage> {
     Future.microtask(() {
       final children = ref.read(childRiverpod).childrenList;
       final groupIds = children.map((c) => c.groupId).toList();
-      ref.read(newsRiverpod.notifier).getNews(groupIds: groupIds, force: force);
+      final childIds = children.map((c) => c.id).toList();
+      ref.read(newsRiverpod.notifier).getNews(
+            groupIds: groupIds,
+            childIds: childIds,
+            force: force,
+          );
     });
   }
 
@@ -99,8 +105,17 @@ class _HomePageState extends ConsumerState<HomePage> {
                 type == 'تعديل جدول';
           }
 
-          // Search the entire list for the most recent important news
-          final featuredNews = newsList.where((news) => isImportant(news)).firstOrNull;
+          // 1. All Targeted Alarms (Personal news for any of the parent's children)
+          // These should NEVER show images and should be prominent
+          final exclusiveAlerts = newsList.where((news) => news.childId != null).toList();
+          
+          // 2. Global/Group Important News (No child targeting)
+          // These can show images and use the featured section
+          final importantNews = newsList.where((news) => 
+            isImportant(news) && news.childId == null
+          ).toList();
+
+          final featuredNews = importantNews.firstOrNull;
           final showFeaturedAtTop = featuredNews != null;
 
           return RefreshIndicator(
@@ -139,7 +154,7 @@ class _HomePageState extends ConsumerState<HomePage> {
                                 shape: BoxShape.circle,
                                 gradient: isDark ? AppColors.energyGradient : null,
                                 border: isDark ? null : Border.all(
-                                  color: AppColors.primaryColor.withOpacity(0.2),
+                                  color: AppColors.primaryColor.withValues(alpha: 0.2),
                                   width: 1.5,
                                 ),
                               ),
@@ -163,7 +178,7 @@ class _HomePageState extends ConsumerState<HomePage> {
                                     tag: 'profile_avatar_header',
                                     child: CircleAvatar(
                                       radius: 20,
-                                      backgroundColor: isDark ? AppColors.darkSurface : AppColors.primaryColor.withOpacity(0.05),
+                                      backgroundColor: isDark ? AppColors.darkSurface : AppColors.primaryColor.withValues(alpha: 0.05),
                                       backgroundImage: user?.imageUrl != null
                                           ? NetworkImage(user!.imageUrl!)
                                           : const AssetImage(AppAssets.userPlaceholder)
@@ -214,7 +229,7 @@ class _HomePageState extends ConsumerState<HomePage> {
                                 color: isDark ? AppColors.darkSurface : Colors.white,
                                 boxShadow: [
                                   BoxShadow(
-                                    color: Colors.red.withOpacity(0.12),
+                                    color: Colors.red.withValues(alpha: 0.12),
                                     blurRadius: 10,
                                     spreadRadius: 2,
                                   ),
@@ -244,10 +259,25 @@ class _HomePageState extends ConsumerState<HomePage> {
                   ),
                 ),
 
-                // ── 3. Featured Important News (Top Priority) ──
+                // ── 3. Administrative Alerts (Subscription, Lateness, etc) ──
+                if (exclusiveAlerts.isNotEmpty)
+                  SliverPadding(
+                    padding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
+                    sliver: SliverList(
+                      delegate: SliverChildBuilderDelegate(
+                        (context, index) => Padding(
+                          padding: const EdgeInsets.only(bottom: 16),
+                          child: ImportantAlertCard(news: exclusiveAlerts[index], isDark: isDark),
+                        ),
+                        childCount: exclusiveAlerts.length,
+                      ),
+                    ),
+                  ),
+
+                // ── 4. Featured Important News ──
                 if (showFeaturedAtTop)
                   SliverPadding(
-                    padding: const EdgeInsets.fromLTRB(24, 32, 24, 0),
+                    padding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
                     sliver: SliverToBoxAdapter(
                       child: _TapWrapper(
                         child: _buildLargeNewsCard(featuredNews, isDark, isFeatured: true),
@@ -315,12 +345,13 @@ class _HomePageState extends ConsumerState<HomePage> {
                         : ListView.builder(
                             scrollDirection: Axis.horizontal,
                             padding: const EdgeInsets.symmetric(horizontal: 16),
-                            itemCount: newsState.newsList.length,
+                            itemCount: newsState.newsList.where((n) => n.childId == null).length,
                             itemBuilder: (context, index) {
+                              final filteredList = newsState.newsList.where((n) => n.childId == null).toList();
                               return Padding(
                                 padding: const EdgeInsets.symmetric(horizontal: 8),
                                 child: _buildLargeNewsCard(
-                                    newsState.newsList[index], isDark),
+                                    filteredList[index], isDark),
                               );
                             },
                           ),
@@ -431,7 +462,7 @@ class _HomePageState extends ConsumerState<HomePage> {
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                         decoration: BoxDecoration(
-                          color: isDark ? AppColors.darkBackground.withValues(alpha: 0.9) : Colors.white.withOpacity(0.9),
+                          color: isDark ? AppColors.darkBackground.withValues(alpha: 0.9) : Colors.white.withValues(alpha: 0.9),
                           borderRadius: BorderRadius.circular(20),
                         ),
                         child: Row(
