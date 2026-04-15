@@ -1,5 +1,7 @@
 class AppAssets {
-  static const String logo = 'assets/images/logo.png';
+  static const String logo = 'assets/images/app_icon.png';
+  static const String logoFull = 'assets/images/logo_full.png';
+  static const String logoTransparent = 'assets/images/app_icon.png';
   static const String userPlaceholder = 'assets/images/defualt-user.png';
   static const String achievement = 'assets/images/achievement.png';
   static const String newsPlaceholder = 'assets/images/news_placeholder.png';

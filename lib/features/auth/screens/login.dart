@@ -71,7 +71,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                 children: [
                   // ── Logo ──
                   Image.asset(
-                    AppIcons.logo,
+                    AppIcons.logoFull,
                     height: 160,
                     fit: BoxFit.contain,
                   ),

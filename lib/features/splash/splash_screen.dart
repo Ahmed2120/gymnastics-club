@@ -118,7 +118,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                               ],
                             ),
                             child: Image.asset(
-                              AppIcons.logo,
+                              AppIcons.logoFull,
                               height: 80,
                               width: 80,
                             ),
