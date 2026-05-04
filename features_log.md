@@ -2,6 +2,15 @@
 
 This file tracks all features added, edited, or removed in the Gymnastics Club project.
 
+## [2026-04-24] Fix: Supabase Initialization & Build
+- **Issue**: App failed with "No host specified in URI" error on local runs and Play Store.
+- **Cause**: Missing `--dart-define-from-file=.env.json` flag during build/run, resulting in empty Supabase credentials.
+- **Fix**: 
+  - Added validation in `SupabaseConstants` and `SupabaseService`.
+  - The app now throws a clear error if credentials are missing instead of failing with a URI error.
+- **Resolution**: Rebuild the app with the correct environment flags.
+- **Files Modified**: `lib/core/constants/supabase_constants.dart`, `lib/core/services/supabase_service.dart`
+
 ## [2026-03-26] News Details Bottom Sheet
 - **Feature**: News Details Bottom Sheet
 - **Status**: Added

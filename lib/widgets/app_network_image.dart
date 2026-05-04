@@ -87,8 +87,9 @@ class AppNetworkAvatar extends StatelessWidget {
         width: size,
         height: size,
         fit: BoxFit.cover,
+        // Only set one dimension (width) to maintain aspect ratio during decode
+        // This prevents the "stretched" look while still optimizing memory
         memCacheWidth: size.toInt(),
-        memCacheHeight: size.toInt(),
         placeholder: (context, _) => _Shimmer(width: size, height: size, circular: true),
         errorWidget: (context, url, _) => fallback,
       ),

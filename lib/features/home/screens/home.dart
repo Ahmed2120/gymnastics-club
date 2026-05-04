@@ -19,7 +19,8 @@ import '../widgets/motivation_card.dart';
 import '../widgets/animated_like_button.dart';
 import '../../../widgets/full_screen_viewer.dart';
 import '../widgets/news_details_bottom_sheet.dart';
-import '../widgets/personal_news_card.dart'; // File name matches but class is InterestingAlertCard
+import '../widgets/personal_news_card.dart';
+import '../widgets/empty_news_widget.dart';
 
 class HomePage extends ConsumerStatefulWidget {
   const HomePage({super.key});
@@ -335,27 +336,39 @@ class _HomePageState extends ConsumerState<HomePage> {
 
                 // ── 6. Horizontal News Carousel ──
                 SliverToBoxAdapter(
-                  child: SizedBox(
-                    height: 400,
-                    child: newsState.isLoading
-                        ? Padding(
+                  child: newsState.isLoading
+                      ? SizedBox(
+                          height: 400,
+                          child: Padding(
                             padding: const EdgeInsets.symmetric(horizontal: 24),
                             child: MainShimmer.single(height: 400),
-                          )
-                        : ListView.builder(
-                            scrollDirection: Axis.horizontal,
-                            padding: const EdgeInsets.symmetric(horizontal: 16),
-                            itemCount: newsState.newsList.where((n) => n.childId == null).length,
-                            itemBuilder: (context, index) {
-                              final filteredList = newsState.newsList.where((n) => n.childId == null).toList();
-                              return Padding(
-                                padding: const EdgeInsets.symmetric(horizontal: 8),
-                                child: _buildLargeNewsCard(
-                                    filteredList[index], isDark),
-                              );
-                            },
                           ),
-                  ),
+                        )
+                      : newsState.newsList.where((n) => n.childId == null).isEmpty
+                          ? Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 24),
+                              child: EmptyNewsWidget(isDark: isDark),
+                            )
+                          : SizedBox(
+                              height: 400,
+                              child: ListView.builder(
+                                scrollDirection: Axis.horizontal,
+                                padding: const EdgeInsets.symmetric(horizontal: 16),
+                                itemCount: newsState.newsList
+                                    .where((n) => n.childId == null)
+                                    .length,
+                                itemBuilder: (context, index) {
+                                  final filteredList = newsState.newsList
+                                      .where((n) => n.childId == null)
+                                      .toList();
+                                  return Padding(
+                                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                                    child: _buildLargeNewsCard(
+                                        filteredList[index], isDark),
+                                  );
+                                },
+                              ),
+                            ),
                 ),
 
                 const SliverToBoxAdapter(child: SizedBox(height: 40)),

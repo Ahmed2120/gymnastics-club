@@ -239,9 +239,9 @@ class _AchievementPageState extends ConsumerState<AchievementPage>
   int _getCount(List<AchievementModel> achievements, String type) {
     return achievements.where((a) {
       final t = a.championType?.toLowerCase() ?? '';
-      if (type == 'gold') return t == 'gold' || t == 'ذهب';
-      if (type == 'silver') return t == 'silver' || t == 'فضة';
-      if (type == 'bronze') return t == 'bronze' || t == 'برونز';
+      if (type == 'gold') return t == 'gold' || t == 'ذهبية';
+      if (type == 'silver') return t == 'silver' || t == 'فضية';
+      if (type == 'bronze') return t == 'bronze' || t == 'برونزية';
       return false;
     }).length;
   }

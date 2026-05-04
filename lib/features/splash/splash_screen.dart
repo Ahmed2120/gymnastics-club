@@ -5,14 +5,19 @@ import '../../core/theme/app_colors.dart';
 import '../../core/costants/app_icons.dart';
 import '../../core/costants/app_constants.dart';
 
-class SplashScreen extends StatefulWidget {
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../auth/auth_provider.dart';
+import '../profile/profile_controller/child_riverpod.dart';
+import '../../core/services/local_storage_service.dart';
+
+class SplashScreen extends ConsumerStatefulWidget {
   const SplashScreen({super.key});
 
   @override
-  State<SplashScreen> createState() => _SplashScreenState();
+  ConsumerState<SplashScreen> createState() => _SplashScreenState();
 }
 
-class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderStateMixin {
+class _SplashScreenState extends ConsumerState<SplashScreen> with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _scaleAnimation;
   late Animation<double> _fadeAnimation;
@@ -21,7 +26,6 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
   @override
   void initState() {
     super.initState();
-    init();
     _controller = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1500),
@@ -49,11 +53,36 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
     );
 
     _controller.forward();
+    _checkAuth();
   }
 
-  void init() async {
+  Future<void> _checkAuth() async {
     await Future.delayed(const Duration(seconds: 2));
-    if (mounted) {
+    
+    if (!mounted) return;
+
+    final phone = LocalStorageService.getUserPhone();
+    
+    if (phone != null) {
+      // 1. Verify if account still exists in DB
+      final exists = await ref.read(authProvider.notifier).checkAccountStatus(phone);
+      
+      if (!exists) {
+        // Account was deleted from dashboard, force logout
+        await ref.read(authProvider.notifier).signOut();
+        if (mounted) {
+          context.go(Routes.login);
+        }
+        return;
+      }
+
+      // 2. Load child data and go to dashboard
+      await ref.read(childRiverpod.notifier).getChildren();
+      if (mounted) {
+        context.go(Routes.dashboard);
+      }
+    } else {
+      // No user, go to login
       context.go(Routes.login);
     }
   }

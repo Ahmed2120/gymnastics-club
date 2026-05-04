@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/legacy.dart';
 import 'package:gymnastics_club/core/services/init_getit.dart';
 import '../../../data/repositories/schedule_repository.dart';
 import 'schedule_state.dart';
+import '../../../core/errors/error_handler.dart';
 
 final scheduleRiverpod = StateNotifierProvider<ScheduleRiverpod, ScheduleState>(
   (ref) {
@@ -24,7 +25,7 @@ class ScheduleRiverpod extends StateNotifier<ScheduleState> {
         error: '',
       );
     } catch (e) {
-      state = state.copyWith(isLoading: false, error: e.toString());
+      state = state.copyWith(isLoading: false, error: AppErrorHandler.handle(e));
     }
   }
 }

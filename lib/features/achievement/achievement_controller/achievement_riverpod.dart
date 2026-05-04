@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/legacy.dart';
 import 'package:gymnastics_club/core/services/init_getit.dart';
 import '../../../data/repositories/achievement_repository.dart';
 import 'achievement_state.dart';
+import '../../../core/errors/error_handler.dart';
 
 final achievementRiverpod =
     StateNotifierProvider<AchievementRiverpod, AchievementState>((ref) {
@@ -28,7 +29,7 @@ class AchievementRiverpod extends StateNotifier<AchievementState> {
         error: '',
       );
     } catch (e) {
-      state = state.copyWith(isLoading: false, error: e.toString());
+      state = state.copyWith(isLoading: false, error: AppErrorHandler.handle(e));
     }
   }
 
@@ -49,7 +50,7 @@ class AchievementRiverpod extends StateNotifier<AchievementState> {
         error: '',
       );
     } catch (e) {
-      state = state.copyWith(isLoadingMore: false, error: e.toString());
+      state = state.copyWith(isLoadingMore: false, error: AppErrorHandler.handle(e));
     }
   }
 }

@@ -7,6 +7,7 @@ import '../../../data/models/models/news_model.dart';
 import '../../../data/repositories/news_repository.dart';
 import '../../auth/auth_provider.dart';
 import 'news_state.dart';
+import '../../../core/errors/error_handler.dart';
 
 final newsRiverpod = StateNotifierProvider.autoDispose<NewsRiverpod, NewsState>(
   (ref) {
@@ -41,7 +42,7 @@ class NewsRiverpod extends StateNotifier<NewsState> {
         error: '',
       );
     } catch (e) {
-      state = state.copyWith(isLoading: false, error: e.toString());
+      state = state.copyWith(isLoading: false, error: AppErrorHandler.handle(e));
       rethrow;
     }
   }
@@ -66,7 +67,7 @@ class NewsRiverpod extends StateNotifier<NewsState> {
         error: '',
       );
     } catch (e) {
-      state = state.copyWith(isLoadingMore: false, error: e.toString());
+      state = state.copyWith(isLoadingMore: false, error: AppErrorHandler.handle(e));
     }
   }
 

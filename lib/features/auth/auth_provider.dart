@@ -1,7 +1,9 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/services/init_getit.dart';
+import '../../core/services/local_storage_service.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../../core/services/fcm_service.dart';
+import '../../core/errors/error_handler.dart';
 
 final authRepositoryProvider = Provider<AuthRepository>((ref) {
   return getIT<AuthRepository>();
@@ -49,20 +51,15 @@ class AuthState {
 
 class AuthNotifier extends Notifier<AuthState> {
   @override
-  AuthState build() => AuthState();
+  AuthState build() {
+    final persistedPhone = LocalStorageService.getUserPhone();
+    return AuthState(phoneNumber: persistedPhone);
+  }
 
   AuthRepository get _repository => ref.read(authRepositoryProvider);
  
   void clearError() {
     state = state.copyWith(errorMessage: null);
-  }
-
-  String _getErrorMessage(Object e) {
-    final message = e.toString();
-    if (message.startsWith('Exception: ')) {
-      return message.substring(11);
-    }
-    return message;
   }
 
   // ─── Phone OTP (kept for any existing usage) ─────────────────────────────
@@ -77,7 +74,7 @@ class AuthNotifier extends Notifier<AuthState> {
         phoneNumber: phone,
       );
     } catch (e) {
-      state = state.copyWith(isLoading: false, errorMessage: _getErrorMessage(e));
+      state = state.copyWith(isLoading: false, errorMessage: AppErrorHandler.handle(e));
     }
   }
 
@@ -88,6 +85,7 @@ class AuthNotifier extends Notifier<AuthState> {
     try {
       final success = await _repository.signInWithPassword(phone, password);
       if (success) {
+        await LocalStorageService.setUserPhone(phone);
         state = state.copyWith(isLoading: false, phoneNumber: phone);
         FcmService.updateTokenForParent(phone);
         return true;
@@ -99,7 +97,7 @@ class AuthNotifier extends Notifier<AuthState> {
         return false;
       }
     } catch (e) {
-      state = state.copyWith(isLoading: false, errorMessage: _getErrorMessage(e));
+      state = state.copyWith(isLoading: false, errorMessage: AppErrorHandler.handle(e));
       return false;
     }
   }
@@ -116,7 +114,7 @@ class AuthNotifier extends Notifier<AuthState> {
         email: email,
       );
     } catch (e) {
-      state = state.copyWith(isLoading: false, errorMessage: _getErrorMessage(e));
+      state = state.copyWith(isLoading: false, errorMessage: AppErrorHandler.handle(e));
     }
   }
 
@@ -135,7 +133,7 @@ class AuthNotifier extends Notifier<AuthState> {
       );
       return true;
     } catch (e) {
-      state = state.copyWith(isLoading: false, errorMessage: _getErrorMessage(e));
+      state = state.copyWith(isLoading: false, errorMessage: AppErrorHandler.handle(e));
       return false;
     }
   }
@@ -156,7 +154,7 @@ class AuthNotifier extends Notifier<AuthState> {
       );
       return true;
     } catch (e) {
-      state = state.copyWith(isLoading: false, errorMessage: _getErrorMessage(e));
+      state = state.copyWith(isLoading: false, errorMessage: AppErrorHandler.handle(e));
       return false;
     }
   }
@@ -175,13 +173,18 @@ class AuthNotifier extends Notifier<AuthState> {
       state = state.copyWith(isLoading: false);
       return true;
     } catch (e) {
-      state = state.copyWith(isLoading: false, errorMessage: _getErrorMessage(e));
+      state = state.copyWith(isLoading: false, errorMessage: AppErrorHandler.handle(e));
       return false;
     }
   }
 
+  Future<bool> checkAccountStatus(String phone) async {
+    return await _repository.checkParentExists(phone);
+  }
+
   Future<void> signOut() async {
     await _repository.signOut();
+    await LocalStorageService.setUserPhone(null);
     state = AuthState();
   }
 }

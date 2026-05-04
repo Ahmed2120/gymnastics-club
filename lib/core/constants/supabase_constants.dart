@@ -1,5 +1,10 @@
 class SupabaseConstants {
-  static const String supabaseUrl = 'https://wxkyjvavuuaxlglrizet.supabase.co';
+  // Values are injected at build time via --dart-define-from-file=.env.json
+  // Never hardcode secrets here. See .env.json.example for the required keys.
+  static const String supabaseUrl = String.fromEnvironment('SUPABASE_URL');
   static const String supabaseAnonKey =
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind4a3lqdmF2dXVheGxnbHJpemV0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA4NDM4MjMsImV4cCI6MjA4NjQxOTgyM30.8aS-PCglv931PnyMIIytM7sHqU6symdttGroFiDbwC8';
+      String.fromEnvironment('SUPABASE_ANON_KEY');
+
+  static bool get isConfigured =>
+      supabaseUrl.isNotEmpty && supabaseAnonKey.isNotEmpty;
 }

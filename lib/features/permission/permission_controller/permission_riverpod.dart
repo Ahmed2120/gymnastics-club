@@ -4,6 +4,7 @@ import '../../../core/services/init_getit.dart';
 import '../../../data/models/models/permission_model.dart';
 import '../../../data/repositories/permission_repository.dart';
 import 'permission_state.dart';
+import '../../../core/errors/error_handler.dart';
 
 final permissionRiverpod =
     StateNotifierProvider.autoDispose<PermissionRiverpod, PermissionState>(
@@ -31,7 +32,7 @@ class PermissionRiverpod extends StateNotifier<PermissionState> {
         error: '',
       );
     } catch (e) {
-      state = state.copyWith(isLoading: false, error: e.toString());
+      state = state.copyWith(isLoading: false, error: AppErrorHandler.handle(e));
     }
   }
 
@@ -53,7 +54,7 @@ class PermissionRiverpod extends StateNotifier<PermissionState> {
         error: '',
       );
     } catch (e) {
-      state = state.copyWith(isLoadingMore: false, error: e.toString());
+      state = state.copyWith(isLoadingMore: false, error: AppErrorHandler.handle(e));
     }
   }
 
@@ -67,7 +68,7 @@ class PermissionRiverpod extends StateNotifier<PermissionState> {
         error: '',
       );
     } catch (e) {
-      state = state.copyWith(isLoading: false, error: e.toString());
+      state = state.copyWith(isLoading: false, error: AppErrorHandler.handle(e));
       rethrow;
     }
   }

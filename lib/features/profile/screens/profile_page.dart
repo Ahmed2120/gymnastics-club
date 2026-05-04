@@ -261,7 +261,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
       child: ListView.builder(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         scrollDirection: Axis.horizontal,
-        reverse: true, // RTL support for the list
+        // reverse: true, // RTL support for the list
         itemCount: children.length,
         itemBuilder: (context, index) {
           final child = children[index];

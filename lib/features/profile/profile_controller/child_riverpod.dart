@@ -4,6 +4,7 @@ import 'package:gymnastics_club/core/services/init_getit.dart';
 import '../../auth/auth_provider.dart';
 import '../../../data/repositories/child_repository.dart';
 import 'child_state.dart';
+import '../../../core/errors/error_handler.dart';
 
 final childRiverpod = StateNotifierProvider<ChildRiverpod, ChildState>((ref) {
   return ChildRiverpod(ref);
@@ -29,7 +30,7 @@ class ChildRiverpod extends StateNotifier<ChildState> {
         error: '',
       );
     } catch (e) {
-      state = state.copyWith(isLoading: false, error: e.toString());
+      state = state.copyWith(isLoading: false, error: AppErrorHandler.handle(e));
     }
   }
 

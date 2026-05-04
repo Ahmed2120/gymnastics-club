@@ -3,10 +3,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gymnastics_club/core/theme/app_colors.dart';
 import 'package:gymnastics_club/widgets/main_text.dart';
+import 'package:animate_do/animate_do.dart';
 import '../../../core/utils/date_converter.dart';
 import '../../../data/models/models/schedule_model.dart';
 import '../../profile/profile_controller/child_riverpod.dart';
 import '../../schedule/schedule_controller/schedule_riverpod.dart';
+import '../../../core/services/notification_service.dart';
+import '../../../core/services/local_storage_service.dart';
+import 'reminder_bottom_sheet.dart';
 
 class TrainingCountdown extends ConsumerStatefulWidget {
   const TrainingCountdown({super.key});
@@ -18,15 +22,27 @@ class TrainingCountdown extends ConsumerStatefulWidget {
 class _TrainingCountdownState extends ConsumerState<TrainingCountdown> {
   Timer? _timer;
   ScheduleModel? _nextSessionModel;
+  DateTime? _nextSessionDateTime;
   bool _isToday = false;
   String _hoursText = '00';
   String _minutesText = '00';
+  
+  bool _isReminderEnabled = false;
+  int _reminderOffset = 60;
 
   @override
   void initState() {
     super.initState();
+    _loadReminderState();
     _startTimer();
     WidgetsBinding.instance.addPostFrameCallback((_) => _updateCountdown());
+  }
+
+  void _loadReminderState() {
+    setState(() {
+      _isReminderEnabled = LocalStorageService.isReminderEnabled();
+      _reminderOffset = LocalStorageService.getReminderOffset();
+    });
   }
 
   @override
@@ -51,7 +67,6 @@ class _TrainingCountdownState extends ConsumerState<TrainingCountdown> {
     final now = DateTime.now();
     final nextDate = next.dateTime;
     
-    // Check if it's today
     final bool isToday = nextDate.year == now.year && 
                          nextDate.month == now.month && 
                          nextDate.day == now.day;
@@ -60,6 +75,7 @@ class _TrainingCountdownState extends ConsumerState<TrainingCountdown> {
     
     setState(() {
       _nextSessionModel = next.model;
+      _nextSessionDateTime = nextDate;
       _isToday = isToday;
       
       if (!difference.isNegative) {
@@ -72,6 +88,9 @@ class _TrainingCountdownState extends ConsumerState<TrainingCountdown> {
         _minutesText = '00';
       }
     });
+
+    // If reminder is enabled but session changed, we might need to reschedule.
+    // For simplicity, we just keep it synchronized when the user sets it.
   }
 
   _SessionData? _getNextSessionData(List<ScheduleModel> schedules) {
@@ -89,7 +108,6 @@ class _TrainingCountdownState extends ConsumerState<TrainingCountdown> {
       
       int daysUntil = (weekday - now.weekday + 7) % 7;
       
-      // If today but time has passed, move to next week
       if (daysUntil == 0 && scheduledDate.isBefore(now)) {
         daysUntil = 7;
       }
@@ -101,6 +119,86 @@ class _TrainingCountdownState extends ConsumerState<TrainingCountdown> {
     if (upcoming.isEmpty) return null;
     upcoming.sort((a, b) => a.dateTime.compareTo(b.dateTime));
     return upcoming.first;
+  }
+
+  Future<void> _showReminderSettings() async {
+    await ReminderBottomSheet.show(
+      context: context,
+      currentOffset: _reminderOffset,
+      isEnabled: _isReminderEnabled,
+      onSetReminder: (minutes) async {
+        await _toggleReminder(true, minutes);
+      },
+      onCancelReminder: () async {
+        await _toggleReminder(false, _reminderOffset);
+      },
+    );
+  }
+
+  Future<void> _toggleReminder(bool enabled, int offset) async {
+    if (_nextSessionDateTime == null) return;
+
+    if (enabled) {
+      // Ensure we have permissions first
+      final bool hasPermission = await NotificationService.requestPermissions();
+      if (!hasPermission) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: MainText('يجب الموافقة على الأذونات لتفعيل التنبيهات', color: Colors.white),
+              backgroundColor: AppColors.primaryCrimson,
+            ),
+          );
+        }
+        return;
+      }
+
+      final notificationTime = _nextSessionDateTime!.subtract(Duration(minutes: offset));
+      
+      if (notificationTime.isBefore(DateTime.now())) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: MainText('لا يمكن ضبط تنبيه لوقت مضى', color: Colors.white)),
+        );
+        return;
+      }
+
+      await NotificationService.scheduleNotification(
+        id: 1001, // Unique ID for training reminder
+        title: 'تنبيه التدريب 🤸',
+        body: 'بطلنا الصغير، التدريب هيبدأ بعد $offset دقيقة. جاهز؟',
+        scheduledDate: notificationTime,
+      );
+
+      await LocalStorageService.setReminderEnabled(true);
+      await LocalStorageService.setReminderOffset(offset);
+      
+      setState(() {
+        _isReminderEnabled = true;
+        _reminderOffset = offset;
+      });
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            backgroundColor: AppColors.primaryColor,
+            content: MainText('تم ضبط التنبيه بنجاح قبل التدريب بـ $offset دقيقة', color: Colors.white, fontSize: 14),
+          ),
+        );
+      }
+    } else {
+      await NotificationService.cancelNotification(1001);
+      await LocalStorageService.setReminderEnabled(false);
+      
+      setState(() {
+        _isReminderEnabled = false;
+      });
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: MainText('تم إلغاء التنبيه', color: Colors.white)),
+        );
+      }
+    }
   }
 
   @override
@@ -151,17 +249,44 @@ class _TrainingCountdownState extends ConsumerState<TrainingCountdown> {
                   fontWeight: FontWeight.w900,
                 ),
               ),
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.08),
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(
-                  Icons.sports_gymnastics,
-                  color: Colors.white,
-                  size: 24,
-                ),
+              Row(
+                children: [
+                  // Reminder Toggle
+                  GestureDetector(
+                    onTap: _showReminderSettings,
+                    child: Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: _isReminderEnabled 
+                            ? AppColors.primaryCrimson.withOpacity(0.2) 
+                            : Colors.white.withOpacity(0.08),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Pulse(
+                        infinite: _isReminderEnabled,
+                        animate: _isReminderEnabled,
+                        child: Icon(
+                          _isReminderEnabled ? Icons.notifications_active : Icons.notifications_outlined,
+                          color: _isReminderEnabled ? AppColors.primaryCrimson : Colors.white,
+                          size: 20,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.08),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.sports_gymnastics,
+                      color: Colors.white,
+                      size: 24,
+                    ),
+                  ),
+                ],
               ),
             ],
           ),

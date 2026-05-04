@@ -8,6 +8,8 @@ import 'core/routing/app_router.dart';
 import 'core/services/init_getit.dart';
 import 'core/services/supabase_service.dart';
 import 'core/services/fcm_service.dart';
+import 'core/services/local_storage_service.dart';
+import 'core/services/notification_service.dart';
 import 'core/theme/theme_provider.dart';
 import 'core/theme/app_theme.dart';
 import 'core/costants/app_constants.dart';
@@ -19,6 +21,8 @@ void main() async {
   );
   await SupabaseService.init();
   await FcmService.init();
+  await LocalStorageService.init();
+  await NotificationService.init();
 
   await EasyLocalization.ensureInitialized();
   setupLocator();
