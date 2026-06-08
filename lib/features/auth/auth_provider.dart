@@ -102,36 +102,29 @@ class AuthNotifier extends Notifier<AuthState> {
     }
   }
 
-  // ─── Email OTP for forgot password ───────────────────────────────────────
+  // ─── Membership Number for forgot password ──────────────────────────────
 
-  Future<void> sendEmailOtp(String email) async {
-    state = state.copyWith(isLoading: true, errorMessage: null);
-    try {
-      await _repository.sendEmailOtp(email);
-      state = state.copyWith(
-        isLoading: false,
-        isOtpSent: true,
-        email: email,
-      );
-    } catch (e) {
-      state = state.copyWith(isLoading: false, errorMessage: AppErrorHandler.handle(e));
-    }
-  }
-
-  Future<bool> verifyEmailOtp({
-    required String email,
-    required String token,
+  Future<bool> verifyMembership({
+    required String phone,
+    required String membershipNumber,
   }) async {
     state = state.copyWith(isLoading: true, errorMessage: null);
     try {
-      await _repository.verifyEmailOtp(email: email, token: token);
-      state = state.copyWith(
-        isLoading: false,
-        isOtpVerified: true,
-        otp: token,
-        email: email,
-      );
-      return true;
+      final success = await _repository.verifyMembershipNumber(phone, membershipNumber);
+      if (success) {
+        state = state.copyWith(
+          isLoading: false,
+          isOtpVerified: true, // We reuse this flag to mean "verified for reset"
+          phoneNumber: phone,
+        );
+        return true;
+      } else {
+        state = state.copyWith(
+          isLoading: false,
+          errorMessage: 'رقم الهاتف أو رمز العضوية غير صحيح',
+        );
+        return false;
+      }
     } catch (e) {
       state = state.copyWith(isLoading: false, errorMessage: AppErrorHandler.handle(e));
       return false;
@@ -141,12 +134,12 @@ class AuthNotifier extends Notifier<AuthState> {
   Future<bool> resetPasswordAfterVerification({
     required String newPassword,
   }) async {
-    final email = state.email;
-    if (email == null) return false;
+    final phone = state.phoneNumber;
+    if (phone == null) return false;
 
     state = state.copyWith(isLoading: true, errorMessage: null);
     try {
-      await _repository.updatePasswordByEmail(email, newPassword);
+      await _repository.updatePasswordInTable(phone, newPassword);
       state = state.copyWith(
         isLoading: false,
         isOtpVerified: false,

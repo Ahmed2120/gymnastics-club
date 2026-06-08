@@ -19,7 +19,8 @@ class ForgetPasswordScreen extends ConsumerStatefulWidget {
 }
 
 class _ForgetPasswordScreenState extends ConsumerState<ForgetPasswordScreen> {
-  final _emailController = TextEditingController();
+  final _phoneController = TextEditingController();
+  final _membershipController = TextEditingController();
  
   @override
   void initState() {
@@ -31,7 +32,8 @@ class _ForgetPasswordScreenState extends ConsumerState<ForgetPasswordScreen> {
 
   @override
   void dispose() {
-    _emailController.dispose();
+    _phoneController.dispose();
+    _membershipController.dispose();
     super.dispose();
   }
 
@@ -74,17 +76,23 @@ class _ForgetPasswordScreenState extends ConsumerState<ForgetPasswordScreen> {
             ),
             40.ph,
             const MainText(
-              'أدخل البريد الإلكتروني المسجل لإرسال رمز التحقق',
+              'أدخل رقم الهاتف ورمز العضوية الخاص بك للتحقق',
               fontSize: 14,
               textAlign: TextAlign.center,
               color: Colors.grey,
             ),
             32.ph,
             MainTextField(
-              controller: _emailController,
-              hint: 'البريد الإلكتروني',
-              keyboardType: TextInputType.emailAddress,
-              prefixIcon: const Icon(Icons.email_outlined, color: Colors.grey),
+              controller: _phoneController,
+              hint: 'رقم الهاتف',
+              keyboardType: TextInputType.phone,
+              prefixIcon: const Icon(Icons.phone_outlined, color: Colors.grey),
+            ),
+            16.ph,
+            MainTextField(
+              controller: _membershipController,
+              hint: 'رمز العضوية',
+              prefixIcon: const Icon(Icons.vpn_key_outlined, color: Colors.grey),
             ),
             if (authState.errorMessage != null) ...[
               24.ph,
@@ -97,19 +105,24 @@ class _ForgetPasswordScreenState extends ConsumerState<ForgetPasswordScreen> {
             ],
             48.ph,
             PrimaryButton(
-              text: authState.isLoading ? 'جاري الإرسال...' : 'إرسال الرمز',
+              text: authState.isLoading ? 'جاري التحقق...' : 'تحقق',
               borderRadius: 24,
               padding: const EdgeInsets.symmetric(vertical: 16),
               onPressed: authState.isLoading
                   ? null
                   : () async {
-                      final email = _emailController.text.trim();
-                      if (email.isEmpty) return;
-                      await authNotifier.sendEmailOtp(email);
+                      final phone = _phoneController.text.trim();
+                      final membership = _membershipController.text.trim();
                       
-                      final currentState = ref.read(authProvider);
-                      if (mounted && currentState.errorMessage == null) {
-                        context.push(Routes.verifyOtp);
+                      if (phone.isEmpty || membership.isEmpty) return;
+                      
+                      final success = await authNotifier.verifyMembership(
+                        phone: phone, 
+                        membershipNumber: membership
+                      );
+                      
+                      if (mounted && success) {
+                        context.push(Routes.resetPassword);
                       }
                     },
             ),

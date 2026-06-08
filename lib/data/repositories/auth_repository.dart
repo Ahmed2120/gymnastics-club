@@ -154,6 +154,19 @@ class AuthRepository {
     }
   }
 
+  Future<bool> verifyMembershipNumber(String phone, String membershipNumber) async {
+    try {
+      final response = await _client.rpc('api_verify_membership', params: {
+        'p_phone': phone,
+        'p_membership_number': membershipNumber,
+      });
+      return response as bool;
+    } catch (e) {
+      AppLogger.log('Error verifying membership number: $e');
+      rethrow;
+    }
+  }
+
   Future<void> signOut() async {
     await _client.auth.signOut();
   }

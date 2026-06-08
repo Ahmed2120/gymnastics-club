@@ -6,7 +6,6 @@ class Routes {
   static String permissions = '/permissions';
   static String attendanceAndAbsence = '/attendanceAndAbsence';
   static String forgetPassword = '/forgetPassword';
-  static String verifyOtp = '/verifyOtp';
   static String resetPassword = '/resetPassword';
   static String notifications = '/notifications';
 }

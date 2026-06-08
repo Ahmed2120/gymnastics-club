@@ -44,4 +44,15 @@ class LocalStorageService {
   static String? getUserPhone() {
     return _prefs.getString(_userPhoneKey);
   }
+
+  // Showcase / onboarding tutorial
+  static const String _showcaseSeenKey = 'showcase_seen_v1';
+
+  static Future<void> setShowcaseSeen() async {
+    await _prefs.setBool(_showcaseSeenKey, true);
+  }
+
+  static bool isShowcaseSeen() {
+    return _prefs.getBool(_showcaseSeenKey) ?? false;
+  }
 }

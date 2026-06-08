@@ -3,27 +3,45 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:gymnastics_club/core/utils/extensions/size_extensions.dart';
 import 'package:gymnastics_club/widgets/main_textfield.dart';
+import 'package:showcaseview/showcaseview.dart';
 import '../auth_provider.dart';
 
 import '../../../core/costants/app_icons.dart';
 import '../../../core/routing/routes.dart';
+import '../../../core/services/local_storage_service.dart';
 import '../../../widgets/main_text.dart';
 import '../../../core/theme/app_colors.dart';
 
-class LoginScreen extends ConsumerStatefulWidget {
+class LoginScreen extends StatelessWidget {
   const LoginScreen({super.key});
 
   @override
-  ConsumerState<LoginScreen> createState() => _LoginScreenState();
+  Widget build(BuildContext context) {
+    return ShowCaseWidget(
+      onFinish: () => LocalStorageService.setShowcaseSeen(),
+      builder: (context) => const _LoginBody(),
+    );
+  }
 }
 
-class _LoginScreenState extends ConsumerState<LoginScreen>
+class _LoginBody extends ConsumerStatefulWidget {
+  const _LoginBody();
+
+  @override
+  ConsumerState<_LoginBody> createState() => _LoginBodyState();
+}
+
+class _LoginBodyState extends ConsumerState<_LoginBody>
     with SingleTickerProviderStateMixin {
   final _phoneController = TextEditingController();
   final _passwordController = TextEditingController();
   late AnimationController _animController;
   late Animation<double> _fadeAnim;
   late Animation<Offset> _slideAnim;
+
+  // Showcase keys
+  final _passwordKey = GlobalKey();
+  final _forgotPasswordKey = GlobalKey();
 
   @override
   void initState() {
@@ -38,8 +56,16 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
       end: Offset.zero,
     ).animate(CurvedAnimation(parent: _animController, curve: Curves.easeOut));
     _animController.forward();
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(authProvider.notifier).clearError();
+      // Start showcase on first launch only
+      if (!LocalStorageService.isShowcaseSeen()) {
+        ShowCaseWidget.of(context).startShowCase([
+          _passwordKey,
+          _forgotPasswordKey,
+        ]);
+      }
     });
   }
 
@@ -79,14 +105,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                   56.ph,
 
                   // ── Club name ──
-                   MainText(
+                  MainText(
                     'مرحباً بك',
                     fontSize: 26,
                     fontWeight: FontWeight.bold,
                     color: isDark ? Colors.white : const Color(0xFF1A1A1A),
                   ),
                   8.ph,
-                   MainText(
+                  MainText(
                     'سجّل دخولك للمتابعة',
                     fontSize: 14,
                     color: isDark ? Colors.white54 : const Color(0xFF777777),
@@ -107,34 +133,75 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
 
                   16.ph,
 
-                  // ── Password field ──
-                  MainTextField(
-                    controller: _passwordController,
-                    hint: 'كلمة المرور',
-                    isPassword: true,
-                    prefixIcon: Icon(
-                      Icons.lock_outline_rounded,
-                      color: isDark ? Colors.white38 : const Color(0xFF999999),
+                  // ── Password field with showcase ──
+                  Showcase(
+                    key: _passwordKey,
+                    title: 'كلمة المرور',
+                    description:
+                        'ادخل كلمة المرور الخاصة بك هنا.\n'
+                        'إذا لم يكن لديك كلمة مرور بعد، استخدم زر "نسيت كلمة المرور؟" أدناه.',
+                    tooltipBackgroundColor: AppColors.primaryCrimson,
+                    textColor: Colors.white,
+                    titleTextStyle: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                      fontFamily: 'Cairo',
+                    ),
+                    descTextStyle: const TextStyle(
+                      color: Colors.white70,
+                      fontSize: 13,
+                      fontFamily: 'Cairo',
+                    ),
+                    child: MainTextField(
+                      controller: _passwordController,
+                      hint: 'كلمة المرور',
+                      isPassword: true,
+                      prefixIcon: Icon(
+                        Icons.lock_outline_rounded,
+                        color: isDark ? Colors.white38 : const Color(0xFF999999),
+                      ),
                     ),
                   ),
 
                   12.ph,
-                  
-                  // ── Forgot Password ──
-                  Align(
-                    alignment: AlignmentDirectional.centerEnd,
-                    child: TextButton(
-                      onPressed: () => context.push(Routes.forgetPassword),
-                      style: TextButton.styleFrom(
-                        padding: EdgeInsets.zero,
-                        minimumSize: Size.zero,
-                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                      ),
-                      child: const MainText(
-                        'نسيت كلمة المرور؟',
-                        fontSize: 14,
-                        color: AppColors.primaryCrimson,
-                        fontWeight: FontWeight.w600,
+
+                  // ── Forgot Password with showcase ──
+                  Showcase(
+                    key: _forgotPasswordKey,
+                    title: 'نسيت كلمة المرور؟',
+                    description:
+                        'لا تقلق!\n'
+                        'اضغط هنا وأدخل رقم هاتفك ورمز العضوية '
+                        'الذي أرسله لك المشرف عبر واتساب لتعيين كلمة مرور جديدة.',
+                    tooltipBackgroundColor: AppColors.primaryCrimson,
+                    textColor: Colors.white,
+                    titleTextStyle: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                      fontFamily: 'Cairo',
+                    ),
+                    descTextStyle: const TextStyle(
+                      color: Colors.white70,
+                      fontSize: 13,
+                      fontFamily: 'Cairo',
+                    ),
+                    child: Align(
+                      alignment: AlignmentDirectional.centerEnd,
+                      child: TextButton(
+                        onPressed: () => context.push(Routes.forgetPassword),
+                        style: TextButton.styleFrom(
+                          padding: EdgeInsets.zero,
+                          minimumSize: Size.zero,
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        ),
+                        child: const MainText(
+                          'نسيت كلمة المرور؟',
+                          fontSize: 14,
+                          color: AppColors.primaryCrimson,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                     ),
                   ),
