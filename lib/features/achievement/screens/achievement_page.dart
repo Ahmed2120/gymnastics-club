@@ -15,6 +15,7 @@ import '../widgets/pulsing_avatar.dart';
 import '../../../widgets/custom_app_bar_button.dart';
 import '../../../widgets/full_screen_viewer.dart';
 import '../../../core/costants/app_assets.dart';
+import 'player_portfolio_page.dart';
 
 class AchievementPage extends ConsumerStatefulWidget {
   const AchievementPage({super.key});
@@ -160,7 +161,34 @@ class _AchievementPageState extends ConsumerState<AchievementPage>
                                       silverCount: silverCount,
                                       bronzeCount: bronzeCount,
                                     ),
-                                    const SizedBox(height: 32),
+                                    const SizedBox(height: 20),
+                                    ElevatedButton.icon(
+                                      onPressed: () {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (_) => const PlayerPortfolioPage(),
+                                          ),
+                                        );
+                                      },
+                                      icon: const Icon(Icons.badge_rounded, color: Colors.white, size: 20),
+                                      label: const MainText(
+                                        "عرض كارت البطولة (بروفايل اللاعب)",
+                                        color: Colors.white,
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w900,
+                                      ),
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: AppColors.primaryCrimson,
+                                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(30),
+                                        ),
+                                        elevation: 4,
+                                        shadowColor: AppColors.primaryCrimson.withOpacity(0.3),
+                                      ),
+                                    ),
+                                    const SizedBox(height: 24),
                                   ],
                                 );
                               },
